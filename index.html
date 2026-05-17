@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Diversif">
+<meta name="theme-color" content="#1a1816">
+<title>Carnet de diversification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f1ea;
+  --bg-card: #fbf8f2;
+  --ink: #1a1816;
+  --ink-muted: #6b6259;
+  --ink-faint: #a39888;
+  --accent: #b8543a;
+  --accent-soft: #d4886f;
+  --line: #e4ddd0;
+  --line-soft: #efe9dc;
+  --allergen: #c14a2b;
+  --allergen-soft: rgba(193,74,43,0.08);
+  --watch: #d4a73a;
+  --ok: #5a8c5e;
+  --reaction: #a8331d;
+  --shadow: 0 1px 0 rgba(26,24,22,0.04), 0 4px 16px rgba(26,24,22,0.04);
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Inter Tight', -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+body {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: env(safe-area-inset-top) 0 calc(80px + env(safe-area-inset-bottom));
+  min-height: 100vh;
+}
+
+header { padding: 28px 22px 18px; border-bottom: 1px solid var(--line); }
+.eyebrow { font-family: 'Fraunces', serif; font-style: italic; font-weight: 400; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.sync-indicator {
+  font-family: 'Inter Tight', sans-serif;
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+  transition: background 0.3s, color 0.3s;
+}
+.sync-indicator.sync-connecting { background: var(--line-soft); color: var(--ink-faint); }
+.sync-indicator.sync-online { background: rgba(90,140,94,0.12); color: var(--ok); }
+.sync-indicator.sync-offline { background: rgba(212,167,58,0.15); color: #8a6b1a; }
+.sync-indicator.sync-error { background: rgba(168,51,29,0.12); color: var(--reaction); }
+h1 { font-family: 'Fraunces', serif; font-weight: 500; font-size: 32px; line-height: 1.05; letter-spacing: -0.02em; }
+h1 em { font-style: italic; font-weight: 400; color: var(--accent); }
+.subtitle { margin-top: 8px; font-size: 13px; color: var(--ink-muted); }
+
+nav.tabs {
+  display: flex; gap: 0; padding: 0 22px;
+  border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 10;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  background: rgba(245, 241, 234, 0.92);
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+nav.tabs::-webkit-scrollbar { display: none; }
+nav.tabs button {
+  background: none; border: none;
+  padding: 14px 0; margin-right: 22px;
+  font-family: inherit; font-size: 13px; font-weight: 500;
+  color: var(--ink-faint); cursor: pointer; position: relative;
+  letter-spacing: 0.02em; transition: color 0.2s;
+  white-space: nowrap; flex-shrink: 0;
+}
+nav.tabs button.active { color: var(--ink); }
+nav.tabs button.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--accent); }
+nav.tabs button .count { display: inline-block; background: var(--line); color: var(--ink-muted); font-size: 10px; padding: 1px 6px; border-radius: 8px; margin-left: 4px; vertical-align: 1px; font-weight: 600; }
+nav.tabs button.active .count { background: var(--accent); color: white; }
+
+main { padding: 18px 22px; }
+section { display: none; }
+section.active { display: block; }
+
+.day-group { margin-bottom: 28px; }
+.day-header { font-family: 'Fraunces', serif; font-style: italic; font-weight: 400; font-size: 14px; color: var(--ink-muted); margin-bottom: 10px; display: flex; align-items: baseline; gap: 8px; }
+.day-header .age { font-family: 'Inter Tight', sans-serif; font-style: normal; font-size: 11px; color: var(--ink-faint); letter-spacing: 0.05em; text-transform: uppercase; }
+.entry { background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px; position: relative; transition: transform 0.15s; }
+.entry:active { transform: scale(0.99); }
+.entry-foods { font-family: 'Fraunces', serif; font-weight: 500; font-size: 17px; line-height: 1.3; letter-spacing: -0.01em; }
+.entry-meta { margin-top: 4px; font-size: 12px; color: var(--ink-muted); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.dot { width: 3px; height: 3px; border-radius: 50%; background: var(--ink-faint); display: inline-block; }
+.entry-notes { margin-top: 8px; font-size: 13px; color: var(--ink-muted); font-style: italic; padding-top: 8px; border-top: 1px dashed var(--line-soft); }
+.reaction-pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; }
+.reaction-ras { background: rgba(90,140,94,0.12); color: var(--ok); }
+.reaction-leger { background: rgba(212,167,58,0.15); color: #8a6b1a; }
+.reaction-surveil { background: rgba(212,167,58,0.2); color: #8a6b1a; }
+.reaction-reaction { background: rgba(168,51,29,0.15); color: var(--reaction); }
+.allergen-badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; background: rgba(193,74,43,0.1); color: var(--allergen); border-radius: 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.entry-delete { position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--ink-faint); font-size: 16px; cursor: pointer; padding: 4px 8px; opacity: 0; transition: opacity 0.2s; }
+.entry:hover .entry-delete, .entry.show-delete .entry-delete { opacity: 1; }
+
+.phase-nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--line-soft); padding: 3px; border-radius: var(--radius-sm); margin-bottom: 18px; }
+.phase-tab { padding: 10px 4px; background: none; border: none; border-radius: 6px; font-family: inherit; font-size: 11px; font-weight: 600; color: var(--ink-muted); cursor: pointer; text-align: center; line-height: 1.2; letter-spacing: 0.02em; }
+.phase-tab.active { background: var(--bg); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.phase-tab.current { color: var(--accent); }
+.phase-tab .phase-tag { display: block; font-size: 9px; font-weight: 500; color: var(--ink-faint); margin-top: 2px; letter-spacing: 0.05em; text-transform: uppercase; }
+.phase-tab.active .phase-tag { color: var(--ink-muted); }
+
+.phase-intro { background: var(--bg-card); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 18px; }
+.phase-intro h3 { font-family: 'Fraunces', serif; font-weight: 500; font-size: 17px; letter-spacing: -0.01em; margin-bottom: 6px; }
+.phase-intro p { font-size: 13px; color: var(--ink-muted); line-height: 1.55; }
+.phase-intro .progress-summary { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 12px; color: var(--ink); display: flex; align-items: center; gap: 10px; }
+.progress-bar { flex: 1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.4s; }
+
+.priority-banner {
+  background: linear-gradient(135deg, #fbf8f2 0%, #fae6dd 100%);
+  border: 1px solid rgba(193,74,43,0.25);
+  border-left: 3px solid var(--allergen);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 22px;
+}
+.priority-header { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; }
+.priority-icon { font-size: 18px; color: var(--allergen); flex-shrink: 0; margin-top: 1px; }
+.priority-title { font-family: 'Fraunces', serif; font-weight: 500; font-size: 15px; letter-spacing: -0.01em; color: var(--ink); }
+.priority-sub { font-size: 12px; color: var(--ink-muted); margin-top: 2px; line-height: 1.4; }
+.priority-progress { padding-top: 10px; border-top: 1px dashed rgba(193,74,43,0.2); font-size: 12px; color: var(--ink); display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.priority-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.priority-chip {
+  background: var(--bg-card);
+  border: 1px solid rgba(193,74,43,0.3);
+  color: var(--allergen);
+  padding: 5px 10px;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  text-transform: lowercase;
+}
+.priority-chip.tested {
+  background: var(--allergen);
+  color: white;
+  border-color: var(--allergen);
+}
+.priority-note {
+  font-size: 11px;
+  color: var(--ink-muted);
+  line-height: 1.5;
+  font-style: italic;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(193,74,43,0.2);
+}
+
+.priority-star {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  color: var(--allergen);
+  font-size: 11px;
+  font-weight: 700;
+}
+.reco-card.is-priority { padding-left: 24px; }
+.reco-card.tested.is-priority .priority-star { color: #f5a78d; }
+
+
+.cat-header { font-family: 'Fraunces', serif; font-style: italic; font-weight: 400; font-size: 13px; color: var(--ink-muted); margin: 18px 0 8px; letter-spacing: 0.01em; display: flex; align-items: baseline; gap: 8px; }
+.cat-header .cat-count { font-family: 'Inter Tight', sans-serif; font-style: normal; font-size: 10px; color: var(--ink-faint); letter-spacing: 0.05em; text-transform: uppercase; }
+
+.reco-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.reco-card { background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; cursor: pointer; position: relative; transition: transform 0.1s, border-color 0.15s; overflow: hidden; }
+.reco-card:active { transform: scale(0.98); }
+.reco-card.is-allergen { border-color: rgba(193,74,43,0.25); background: linear-gradient(135deg, var(--bg-card) 0%, var(--allergen-soft) 100%); }
+.reco-card.tested { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.reco-card.tested.is-allergen { background: linear-gradient(135deg, var(--ink) 0%, #3a1810 100%); border-color: var(--ink); }
+.reco-name { font-family: 'Fraunces', serif; font-weight: 500; font-size: 14px; line-height: 1.2; padding-right: 18px; }
+.reco-card .check { position: absolute; top: 10px; right: 10px; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 11px; color: transparent; }
+.reco-card.tested .check { background: var(--ok); border-color: var(--ok); color: white; }
+.reco-card.is-allergen .reco-name::after { content: '⚠'; margin-left: 4px; color: var(--allergen); font-size: 11px; }
+.reco-card.tested.is-allergen .reco-name::after { color: #f5a78d; }
+.reco-card .first-date { font-size: 9px; margin-top: 3px; letter-spacing: 0.04em; font-style: italic; color: rgba(255,255,255,0.55); }
+
+.tested-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.tested-item { background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; position: relative; cursor: pointer; }
+.tested-item.is-allergen { border-color: rgba(193,74,43,0.3); background: rgba(193,74,43,0.03); }
+.tested-name { font-family: 'Fraunces', serif; font-weight: 500; font-size: 14px; line-height: 1.2; }
+.tested-date { font-size: 10px; color: var(--ink-faint); letter-spacing: 0.04em; text-transform: uppercase; margin-top: 4px; }
+.tested-item.is-allergen .tested-name::after { content: '⚠'; margin-left: 4px; color: var(--allergen); font-size: 11px; }
+
+.filter-bar { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+.filter-bar::-webkit-scrollbar { display: none; }
+.chip { flex-shrink: 0; padding: 6px 12px; background: var(--bg-card); border: 1px solid var(--line); border-radius: 20px; font-size: 12px; font-weight: 500; color: var(--ink-muted); cursor: pointer; white-space: nowrap; }
+.chip.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+.observation-card { background: linear-gradient(135deg, #fbf8f2 0%, #f5ecdc 100%); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 10px; }
+.observation-card.is-allergen { border-left-color: var(--allergen); background: linear-gradient(135deg, #fbf8f2 0%, #fae6dd 100%); }
+.observation-name { font-family: 'Fraunces', serif; font-weight: 500; font-size: 18px; letter-spacing: -0.01em; }
+.observation-progress { margin-top: 10px; display: flex; gap: 4px; }
+.tick { flex: 1; height: 6px; background: var(--line); border-radius: 3px; }
+.tick.done { background: var(--ok); }
+.tick.is-allergen.done { background: var(--allergen); }
+.observation-status { margin-top: 8px; font-size: 12px; color: var(--ink-muted); font-style: italic; }
+.observation-status strong { color: var(--ink); font-style: normal; font-weight: 600; }
+
+.fab { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); right: 50%; transform: translateX(min(330px, 50vw - 30px)); width: 56px; height: 56px; border-radius: 50%; background: var(--ink); color: var(--bg); border: none; font-size: 28px; font-weight: 300; cursor: pointer; box-shadow: 0 6px 24px rgba(26,24,22,0.25); z-index: 50; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
+.fab:active { transform: translateX(min(330px, 50vw - 30px)) scale(0.95); }
+
+.modal-overlay { position: fixed; inset: 0; background: rgba(26,24,22,0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 100; display: none; align-items: flex-end; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal { background: var(--bg); width: 100%; max-width: 720px; max-height: 92vh; overflow-y: auto; border-radius: 24px 24px 0 0; padding: 22px 22px calc(22px + env(safe-area-inset-bottom)); animation: slideUp 0.25s ease-out; }
+@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-handle { width: 36px; height: 4px; background: var(--line); border-radius: 2px; margin: 0 auto 18px; }
+.modal h2 { font-family: 'Fraunces', serif; font-weight: 500; font-size: 22px; letter-spacing: -0.01em; margin-bottom: 4px; }
+.modal-sub { font-size: 12px; color: var(--ink-muted); margin-bottom: 20px; }
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 11px; font-weight: 600; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.field input[type="text"], .field input[type="date"], .field textarea, .field select { width: 100%; padding: 10px 12px; background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius-sm); font-family: inherit; font-size: 15px; color: var(--ink); outline: none; transition: border-color 0.15s; }
+.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); }
+.field textarea { resize: none; min-height: 60px; }
+
+.food-input-wrap { position: relative; }
+.food-suggestions { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius-sm); max-height: 240px; overflow-y: auto; z-index: 5; box-shadow: var(--shadow); display: none; }
+.food-suggestions.show { display: block; }
+.food-sugg-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--line-soft); font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+.food-sugg-item:last-child { border-bottom: none; }
+.food-sugg-item:hover, .food-sugg-item.highlighted { background: var(--line-soft); }
+.food-sugg-item .meta { font-size: 10px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.04em; }
+.food-sugg-item .meta.allergen { color: var(--allergen); font-weight: 600; }
+
+.selected-foods { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; min-height: 32px; }
+.food-tag { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; background: var(--ink); color: var(--bg); border-radius: 16px; font-size: 13px; font-weight: 500; }
+.food-tag.is-allergen { background: var(--allergen); }
+.food-tag .remove { background: rgba(255,255,255,0.25); border: none; color: inherit; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; line-height: 1; }
+
+.segmented { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--line-soft); padding: 3px; border-radius: var(--radius-sm); }
+.seg-option { padding: 8px 4px; background: none; border: none; border-radius: 6px; font-family: inherit; font-size: 12px; font-weight: 500; color: var(--ink-muted); cursor: pointer; text-align: center; }
+.seg-option.active { background: var(--bg); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.seg-option.active.r-ras { color: var(--ok); }
+.seg-option.active.r-leger, .seg-option.active.r-surveil { color: #8a6b1a; }
+.seg-option.active.r-reaction { color: var(--reaction); }
+
+.btn-row { display: flex; gap: 8px; margin-top: 20px; }
+.btn { flex: 1; padding: 14px; border: none; border-radius: var(--radius-sm); font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+.btn-primary { background: var(--ink); color: var(--bg); }
+.btn-secondary { background: transparent; color: var(--ink-muted); }
+
+.empty { text-align: center; padding: 60px 20px; color: var(--ink-faint); }
+.empty-art { font-family: 'Fraunces', serif; font-style: italic; font-size: 60px; color: var(--line); margin-bottom: 8px; }
+.empty p { font-family: 'Fraunces', serif; font-style: italic; font-size: 15px; color: var(--ink-muted); }
+
+.fiche-eyebrow { font-family: 'Fraunces', serif; font-style: italic; font-size: 12px; color: var(--ink-faint); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+.fiche-title { font-family: 'Fraunces', serif; font-weight: 500; font-size: 26px; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 4px; }
+.fiche-cat { font-size: 12px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 18px; }
+.fiche-allergen-banner { background: var(--allergen-soft); border: 1px solid rgba(193,74,43,0.25); border-left: 3px solid var(--allergen); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 16px; font-size: 12px; color: var(--reaction); line-height: 1.5; }
+.fiche-allergen-banner.is-priority { background: linear-gradient(135deg, var(--allergen-soft) 0%, rgba(193,74,43,0.15) 100%); border-left-width: 4px; }
+.fiche-allergen-banner strong { font-weight: 600; }
+.fiche-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line-soft); }
+.fiche-row:last-of-type { border-bottom: none; }
+.fiche-row .fiche-label { font-size: 11px; font-weight: 600; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; flex-shrink: 0; width: 100px; padding-top: 1px; }
+.fiche-row .fiche-value { font-size: 14px; text-align: right; flex: 1; line-height: 1.45; }
+.fiche-row .fiche-value em { font-style: italic; font-family: 'Fraunces', serif; color: var(--ink-muted); font-size: 13px; }
+.fiche-status-tested { background: rgba(90,140,94,0.1); color: var(--ok); padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 16px; text-align: center; }
+.fiche-status-tested strong { font-weight: 600; }
+.fiche-action-btn { width: 100%; margin-top: 18px; padding: 14px; background: var(--ink); color: var(--bg); border: none; border-radius: var(--radius-sm); font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+
+.settings-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line-soft); }
+.settings-row:last-child { border-bottom: none; }
+.settings-label { font-size: 14px; }
+.settings-value { font-size: 13px; color: var(--ink-muted); }
+.btn-text { background: none; border: none; color: var(--accent); font-family: inherit; font-size: 13px; cursor: pointer; font-weight: 500; }
+.danger { color: var(--reaction); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">
+    <span>Carnet de bord</span>
+    <span class="sync-indicator sync-connecting" id="sync-indicator">Connexion...</span>
+  </div>
+  <h1>La diversification de <em id="baby-name">bébé</em></h1>
+  <div class="subtitle" id="baby-age">—</div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="journal">Journal <span class="count" id="count-journal">0</span></button>
+  <button class="tab" data-tab="reco">Recommandations</button>
+  <button class="tab" data-tab="observation">Observation <span class="count" id="count-obs">0</span></button>
+  <button class="tab" data-tab="tested">Déjà testé <span class="count" id="count-tested">0</span></button>
+  <button class="tab" data-tab="settings">Réglages</button>
+</nav>
+
+<main>
+  <section id="tab-journal" class="active"><div id="journal-content"></div></section>
+
+  <section id="tab-reco">
+    <div class="phase-nav" id="phase-nav"></div>
+    <div id="reco-content"></div>
+  </section>
+
+  <section id="tab-observation">
+    <div class="subtitle" style="margin-bottom: 14px;">Aliments introduits depuis moins de 3 jours. Règle classique avant d'introduire le suivant, particulièrement pour les allergènes.</div>
+    <div id="obs-content"></div>
+  </section>
+
+  <section id="tab-tested">
+    <div class="filter-bar" id="filter-bar">
+      <button class="chip active" data-filter="all">Tout</button>
+      <button class="chip" data-filter="allergen">Allergènes</button>
+      <button class="chip" data-filter="legume">Légumes</button>
+      <button class="chip" data-filter="fruit">Fruits</button>
+      <button class="chip" data-filter="cereale">Céréales</button>
+      <button class="chip" data-filter="proteine">Protéines</button>
+      <button class="chip" data-filter="matiere-grasse">Mat. grasses</button>
+      <button class="chip" data-filter="laitage">Laitages</button>
+      <button class="chip" data-filter="autre">Autres</button>
+    </div>
+    <div id="tested-content"></div>
+  </section>
+
+  <section id="tab-settings">
+    <div class="settings-row">
+      <span class="settings-label">Prénom de bébé</span>
+      <span class="settings-value"><input type="text" id="setting-name" style="background:transparent; border:none; text-align:right; font-family:inherit; font-size:13px; color:var(--ink-muted); width: 120px;"></span>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Date de naissance</span>
+      <span class="settings-value"><input type="date" id="setting-dob" style="background:transparent; border:none; text-align:right; font-family:inherit; font-size:13px; color:var(--ink-muted);"></span>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Exporter les données</span>
+      <button class="btn-text" id="btn-export">Télécharger JSON</button>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Importer un export</span>
+      <button class="btn-text" id="btn-import">Importer JSON</button>
+      <input type="file" id="import-file" accept=".json" style="display:none">
+    </div>
+    <div class="settings-row">
+      <span class="settings-label danger">Tout effacer</span>
+      <button class="btn-text danger" id="btn-clear">Effacer</button>
+    </div>
+    <div style="margin-top: 30px; padding: 16px; background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius); font-size: 12px; color: var(--ink-muted); line-height: 1.5;">
+      <strong style="color: var(--ink); font-weight: 600;">Sources des recommandations</strong><br>
+      Phases d'introduction et règles basées sur le PNNS 4 (2019-2023), avis Anses/HCSP 2019-2020, Santé Publique France (campagne 2021), mise à jour Cahiers de nutrition et diététique 2024.<br><br>
+      <strong style="color: var(--ink); font-weight: 600;">★ Allergènes pédiatriques prioritaires (4-6 mois)</strong><br>
+      Œuf, arachide, fruits à coque, poisson, gluten, lait, sésame, soja. Introduction précoce recommandée par le PNNS 4 (fenêtre de tolérance, étude LEAP NEJM 2015).<br><br>
+      <strong style="color: var(--ink); font-weight: 600;">⚠ Liste UE des 14 allergènes (étiquetage INCO)</strong><br>
+      Liste réglementaire (UE 1169/2011) pour l'étiquetage industriel/restauration. Distincte des priorités pédiatriques. Inclut en plus : céleri, moutarde, crustacés, mollusques, lupin, sulfites — sans urgence d'introduction précoce particulière.<br><br>
+      <em>Cet outil est indicatif et ne remplace pas l'avis du pédiatre.</em>
+    </div>
+    <div style="margin-top: 14px; padding: 16px; background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius); font-size: 12px; color: var(--ink-muted); line-height: 1.5;">
+      <strong style="color: var(--ink); font-weight: 600;">Synchronisation temps réel</strong><br>
+      Tes données sont stockées sur Firebase (Google Cloud), accessibles depuis n'importe quel appareil via l'URL secrète. Léa et toi voyez les mêmes données en direct. Le cache local permet de saisir hors-ligne : la synchro reprend automatiquement au retour du réseau.
+    </div>
+    <div style="margin-top: 14px; padding: 16px; background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius); font-size: 12px; color: var(--ink-muted); line-height: 1.5;">
+      <strong style="color: var(--ink); font-weight: 600;">Installation sur iPhone</strong><br>
+      Ouvre cette page dans Safari → bouton Partager → <em>Sur l'écran d'accueil</em>.
+    </div>
+  </section>
+</main>
+
+<button class="fab" id="fab">+</button>
+
+<div class="modal-overlay" id="modal-add">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Nouveau repas</h2>
+    <div class="modal-sub">Saisis rapidement, tu peux corriger après.</div>
+
+    <div class="field"><label>Date</label><input type="date" id="f-date"></div>
+
+    <div class="field">
+      <label>Aliments</label>
+      <div class="selected-foods" id="selected-foods"></div>
+      <div class="food-input-wrap">
+        <input type="text" id="f-food" placeholder="Tape un aliment..." autocomplete="off">
+        <div class="food-suggestions" id="food-suggestions"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Forme</label>
+      <div class="segmented" id="seg-form">
+        <button type="button" class="seg-option active" data-val="puree">Purée lisse</button>
+        <button type="button" class="seg-option" data-val="mixe">Mouliné</button>
+        <button type="button" class="seg-option" data-val="ecrase">Écrasé</button>
+        <button type="button" class="seg-option" data-val="morceau">Morceau</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Réaction</label>
+      <div class="segmented" id="seg-reaction">
+        <button type="button" class="seg-option active r-ras" data-val="ras">RAS</button>
+        <button type="button" class="seg-option r-leger" data-val="leger">Léger</button>
+        <button type="button" class="seg-option r-surveil" data-val="surveil">À surveiller</button>
+        <button type="button" class="seg-option r-reaction" data-val="reaction">Réaction</button>
+      </div>
+    </div>
+
+    <div class="field"><label>Notes (facultatif)</label><textarea id="f-notes" placeholder="Quantité, contexte, observation..."></textarea></div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="btn-cancel">Annuler</button>
+      <button class="btn btn-primary" id="btn-save">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-fiche">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="fiche-content"></div>
+  </div>
+</div>
+
+<script type="module">
+/* ============================================================
+   FIREBASE — synchro temps réel
+   Remplace la config ci-dessous par celle de TON projet Firebase
+   (Console Firebase → Paramètres → Tes apps → Config)
+   ============================================================ */
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, setDoc, onSnapshot, deleteField, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC7sZDCVP-r34T33L6nEwWzibsrXnxletA",
+  authDomain: "diversif-bebe.firebaseapp.com",
+  projectId: "diversif-bebe",
+  storageBucket: "diversif-bebe.firebasestorage.app",
+  messagingSenderId: "214370418873",
+  appId: "1:214370418873:web:7aaf0c72151003cf5b1b68"
+};
+
+// Identifiant unique de votre journal — gardez ce nom secret dans le code
+// Si quelqu'un connaît cet ID, il accède aux données. Donc ne le partage à personne.
+const JOURNAL_ID = 'journal-7rkwbmzT';
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Cache offline : si pas de réseau, les écritures sont mises en file et synchronisées au retour
+try { await enableIndexedDbPersistence(db); } catch (e) { /* déjà activé ou non supporté */ }
+
+/* BASE D'ALIMENTS — PNNS 4, Anses/HCSP, SPF 2021, Cahiers nutr/diét 2024 */
+const FOODS = [
+  // LÉGUMES
+  { id: 'carotte', name: 'Carotte', cat: 'legume', phase: 'demarrage', texture: 'Purée lisse, bien cuite à la vapeur', tip: 'Un grand classique du démarrage : doux, sucré, bien toléré.' },
+  { id: 'courgette', name: 'Courgette', cat: 'legume', phase: 'demarrage', texture: 'Purée lisse (épluchée et épépinée)', tip: "Très digeste. L'épépiner pour les premières fois." },
+  { id: 'haricot-vert', name: 'Haricot vert', cat: 'legume', phase: 'demarrage', texture: 'Purée lisse mixée fin', tip: 'À bien mixer car fibreux.' },
+  { id: 'potiron', name: 'Potiron / courge', cat: 'legume', phase: 'demarrage', texture: 'Purée lisse, vapeur ou four', tip: 'Saveur douce et sucrée, très apprécié.' },
+  { id: 'panais', name: 'Panais', cat: 'legume', phase: 'demarrage', texture: 'Purée lisse', tip: 'Saveur douce, parfait pour ouvrir le répertoire.' },
+  { id: 'patate-douce', name: 'Patate douce', cat: 'legume', phase: 'demarrage', texture: 'Purée lisse, vapeur ou four', tip: 'Riche en bêta-carotène. Très apprécié.' },
+  { id: 'butternut', name: 'Butternut', cat: 'legume', phase: 'demarrage', texture: 'Purée lisse', tip: 'Doux, légèrement sucré, idéal en démarrage.' },
+  { id: 'brocoli', name: 'Brocoli', cat: 'legume', phase: 'demarrage', texture: 'Purée lisse, vapeur', tip: 'Goût plus marqué. Bonne source de vit. C.' },
+  { id: 'chou-fleur', name: 'Chou-fleur', cat: 'legume', phase: 'demarrage', texture: 'Purée lisse', tip: 'Goût marqué, parfois mieux accepté mélangé.' },
+  { id: 'epinard', name: 'Épinard', cat: 'legume', phase: 'demarrage', texture: 'Purée lisse mixée fin', tip: 'En quantité modérée (riche en nitrates).' },
+  { id: 'celeri', name: 'Céleri', cat: 'legume', phase: 'demarrage', texture: 'Purée lisse, bien cuit', allerg: 'céleri', allergNote: 'Figure dans la liste des 14 allergènes UE (étiquetage), mais ne fait PAS partie des allergènes pédiatriques prioritaires du PNNS 4. Introduction possible dès 4-6 mois sans urgence particulière, comme un légume classique.', tip: 'Branche ou rave. Goût aromatique, bien toléré en purée lisse.' },
+  { id: 'fenouil', name: 'Fenouil', cat: 'legume', phase: 'demarrage', texture: 'Purée lisse', tip: 'Goût anisé, ouvre la palette aromatique.' },
+  { id: 'poireau', name: 'Poireau (blanc)', cat: 'legume', phase: 'demarrage', texture: 'Purée lisse, partie blanche uniquement', tip: 'Bien mixer pour éliminer les fibres.' },
+  { id: 'navet', name: 'Navet', cat: 'legume', phase: 'demarrage', texture: 'Purée lisse', tip: 'Saveur douce et sucrée.' },
+  { id: 'avocat', name: 'Avocat', cat: 'legume', phase: 'demarrage', texture: 'Écrasé à la fourchette', tip: 'Riche en bonnes graisses. Pas de cuisson nécessaire.' },
+  { id: 'tomate', name: 'Tomate', cat: 'legume', phase: 'textures', texture: 'Cuite, pelée et épépinée puis écrasée', tip: 'Peler et épépiner systématiquement avant 12 mois.' },
+  { id: 'aubergine', name: 'Aubergine', cat: 'legume', phase: 'textures', texture: 'Pelée, cuite, écrasée', tip: 'Goût qui peut être amer ; bien cuire.' },
+  { id: 'petits-pois', name: 'Petits pois', cat: 'legume', phase: 'textures', texture: 'Bien mixés ou écrasés', tip: 'À mixer fin (peaux).' },
+  { id: 'betterave', name: 'Betterave cuite', cat: 'legume', phase: 'textures', texture: 'Cuite et écrasée', tip: 'Couleur vive : peut tâcher !' },
+  { id: 'poivron', name: 'Poivron', cat: 'legume', phase: 'morceaux', texture: 'Cuit, pelé, en petits morceaux fondants', tip: 'Peler la peau avant 12 mois.' },
+  { id: 'concombre', name: 'Concombre', cat: 'legume', phase: 'morceaux', texture: 'Cru épluché, en bâtonnets fondants', tip: 'Idéal pour la DME une fois assis.' },
+
+  // FRUITS
+  { id: 'pomme', name: 'Pomme', cat: 'fruit', phase: 'demarrage', texture: 'Compote lisse, cuite et mixée', tip: 'Premier fruit classique. Sans sucre ajouté.' },
+  { id: 'poire', name: 'Poire', cat: 'fruit', phase: 'demarrage', texture: 'Compote ou bien mûre écrasée', tip: 'Très digeste, légèrement laxative.' },
+  { id: 'banane', name: 'Banane', cat: 'fruit', phase: 'demarrage', texture: 'Écrasée à la fourchette', tip: 'Bien mûre. Pas de cuisson nécessaire.' },
+  { id: 'peche', name: 'Pêche', cat: 'fruit', phase: 'demarrage', texture: 'Pelée, écrasée ou en compote', tip: 'Bien mûre. Peler la peau.' },
+  { id: 'abricot', name: 'Abricot', cat: 'fruit', phase: 'demarrage', texture: 'Compote sans peau', tip: 'Bien mûr.' },
+  { id: 'nectarine', name: 'Nectarine', cat: 'fruit', phase: 'demarrage', texture: 'Pelée et écrasée', tip: 'Très juteux, idéal mûr.' },
+  { id: 'mangue', name: 'Mangue', cat: 'fruit', phase: 'demarrage', texture: 'Bien mûre, écrasée', tip: 'Doux et sucré.' },
+  { id: 'prune', name: 'Prune', cat: 'fruit', phase: 'textures', texture: 'Compote', tip: 'Effet laxatif possible.' },
+  { id: 'coing', name: 'Coing', cat: 'fruit', phase: 'textures', texture: 'Compote bien cuite', tip: 'Doit être cuit obligatoirement.' },
+  { id: 'fraise', name: 'Fraise', cat: 'fruit', phase: 'textures', texture: 'Mûre, écrasée', tip: 'Histamino-libérateur : rougeurs péribuccales fréquentes mais bénignes.' },
+  { id: 'framboise', name: 'Framboise', cat: 'fruit', phase: 'textures', texture: 'Mûre, écrasée ou compote', tip: 'Possibles rougeurs péribuccales sans gravité.' },
+  { id: 'agrume', name: 'Agrumes (orange, clémentine)', cat: 'fruit', phase: 'textures', texture: 'Quartiers sans pépin/peau', tip: "Acidité parfois mal tolérée au début." },
+  { id: 'kiwi', name: 'Kiwi', cat: 'fruit', phase: 'textures', texture: 'Mûr, écrasé', tip: 'Allergène fréquent ; surveiller 2-3 j.' },
+  { id: 'ananas', name: 'Ananas', cat: 'fruit', phase: 'morceaux', texture: 'Bien mûr, petits morceaux', tip: 'Acidité marquée.' },
+
+  // CÉRÉALES & FÉCULENTS
+  { id: 'riz', name: 'Riz', cat: 'cereale', phase: 'demarrage', texture: 'Bien cuit, mixé', tip: 'Naturellement sans gluten. Bonne base.' },
+  { id: 'mais', name: 'Maïs / polenta', cat: 'cereale', phase: 'demarrage', texture: 'Polenta bien cuite et lisse', tip: 'Sans gluten.' },
+  { id: 'ble', name: 'Blé (pâtes, semoule)', cat: 'cereale', phase: 'demarrage', texture: 'Pâtes bien cuites mixées ; semoule fine', allerg: 'gluten', allergNote: 'Allergène pédiatrique majeur. Introduction entre 4 et 6 mois (PNNS 4) : pas de bénéfice à retarder, au contraire.', tip: 'Introduction précoce désormais encouragée.', priority: true },
+  { id: 'avoine', name: 'Avoine', cat: 'cereale', phase: 'demarrage', texture: 'Bouillie bien cuite', allerg: 'gluten', tip: 'Source intéressante de fibres solubles.' },
+  { id: 'quinoa', name: 'Quinoa', cat: 'cereale', phase: 'demarrage', texture: 'Bien cuit et mixé', tip: 'Sans gluten, riche en protéines.' },
+  { id: 'sarrasin', name: 'Sarrasin', cat: 'cereale', phase: 'demarrage', texture: 'Bien cuit, mixé', tip: 'Sans gluten malgré son nom.' },
+  { id: 'pomme-de-terre', name: 'Pomme de terre', cat: 'cereale', phase: 'demarrage', texture: 'Purée lisse', tip: 'Bonne base pour adoucir un légume au goût fort.' },
+  { id: 'pates', name: 'Pâtes', cat: 'cereale', phase: 'textures', texture: 'Petites pâtes bien cuites', allerg: 'gluten', tip: 'Coquillettes, alphabet, étoiles ; bien cuites.' },
+  { id: 'pain', name: 'Pain', cat: 'cereale', phase: 'morceaux', texture: 'Petits morceaux mous', allerg: 'gluten', tip: 'Sans sel ajouté de préférence.' },
+
+  // PROTÉINES
+  { id: 'poulet', name: 'Poulet', cat: 'proteine', phase: 'demarrage', texture: 'Mixé très fin avec le légume', tip: 'Introduire dès 4-6m, ~10 g/jour au début.' },
+  { id: 'dinde', name: 'Dinde', cat: 'proteine', phase: 'demarrage', texture: 'Mixée fin', tip: 'Viande blanche douce, idéale au démarrage.' },
+  { id: 'boeuf', name: 'Bœuf (haché)', cat: 'proteine', phase: 'demarrage', texture: 'Haché, mixé avec le légume', tip: 'Cuisson à cœur obligatoire. Riche en fer.' },
+  { id: 'veau', name: 'Veau', cat: 'proteine', phase: 'demarrage', texture: 'Mixé fin', tip: 'Viande tendre et digeste.' },
+  { id: 'agneau', name: 'Agneau', cat: 'proteine', phase: 'demarrage', texture: 'Mixé fin', tip: 'Plus gras que les viandes blanches.' },
+  { id: 'porc', name: 'Porc (filet maigre)', cat: 'proteine', phase: 'demarrage', texture: 'Mixé fin', tip: 'Bien cuit à cœur. Choisir maigre.' },
+  { id: 'jambon', name: 'Jambon blanc', cat: 'proteine', phase: 'textures', texture: 'Mixé fin', tip: 'Choisir un jambon peu salé.' },
+  { id: 'oeuf', name: 'Œuf (bien cuit)', cat: 'proteine', phase: 'demarrage', texture: 'Œuf dur écrasé, à incorporer', allerg: 'œuf', allergNote: 'Allergène pédiatrique MAJEUR. Introduction PRÉCOCE recommandée entre 4 et 6 mois (réduit le risque allergique). Toujours bien cuit (jaune ET blanc).', tip: "Introduction tôt = protection contre l'allergie.", priority: true },
+  { id: 'cabillaud', name: 'Cabillaud', cat: 'proteine', phase: 'demarrage', texture: 'Mixé avec le légume', allerg: 'poisson', allergNote: 'Allergène pédiatrique majeur. Introduction précoce 4-6 mois recommandée.', tip: "Poisson maigre, idéal pour démarrer. ~10 g/j.", priority: true },
+  { id: 'colin', name: 'Colin / merlu', cat: 'proteine', phase: 'demarrage', texture: 'Mixé', allerg: 'poisson', tip: "Très peu d'arêtes." },
+  { id: 'sole', name: 'Sole', cat: 'proteine', phase: 'demarrage', texture: 'Mixée', allerg: 'poisson', tip: 'Très digeste.' },
+  { id: 'saumon', name: 'Saumon', cat: 'proteine', phase: 'demarrage', texture: 'Mixé, bien cuit', allerg: 'poisson', tip: 'Riche en oméga-3. Cuit à cœur obligatoirement.' },
+  { id: 'sardine', name: 'Sardine', cat: 'proteine', phase: 'textures', texture: 'Mixée, arêtes retirées', allerg: 'poisson', tip: 'Riche en oméga-3 et calcium.' },
+  { id: 'maquereau', name: 'Maquereau', cat: 'proteine', phase: 'textures', texture: 'Mixé', allerg: 'poisson', tip: 'Oméga-3. Retirer les arêtes.' },
+  { id: 'thon', name: 'Thon (au naturel)', cat: 'proteine', phase: 'morceaux', texture: 'Émietté', allerg: 'poisson', tip: 'À limiter (mercure) : 1 fois max/semaine avant 30 mois.' },
+  { id: 'tofu', name: 'Tofu (soja)', cat: 'proteine', phase: 'demarrage', texture: 'Soyeux ou écrasé très fin, mélangé à une purée', allerg: 'soja', allergNote: 'Allergène pédiatrique majeur. Introduction précoce 4-6 mois recommandée (fenêtre de tolérance).', tip: 'Source de protéines végétales. Le soja fait partie des allergènes à introduire tôt.', priority: true },
+  { id: 'lentille', name: 'Lentilles', cat: 'proteine', phase: 'textures', texture: 'Bien cuites, mixées avec un légume', tip: 'Bien mixer (peaux). Riches en fer.' },
+  { id: 'pois-chiche', name: 'Pois chiches', cat: 'proteine', phase: 'morceaux', texture: 'Écrasés, ou en houmous léger', tip: 'En houmous (sans sel), idéal.' },
+
+  // MATIÈRES GRASSES
+  { id: 'huile-colza', name: 'Huile de colza', cat: 'matiere-grasse', phase: 'demarrage', texture: 'À ajouter crue dans les purées', tip: '+1 c. à café/jour. Riche en oméga-3, indispensable.' },
+  { id: 'huile-olive', name: "Huile d'olive", cat: 'matiere-grasse', phase: 'demarrage', texture: 'À ajouter crue', tip: 'Alterner avec colza pour la diversité.' },
+  { id: 'huile-noix', name: 'Huile de noix', cat: 'matiere-grasse', phase: 'demarrage', texture: 'À ajouter crue', allerg: 'fruits à coque', tip: "Bonne source d'oméga-3." },
+  { id: 'huile-lin', name: 'Huile de lin', cat: 'matiere-grasse', phase: 'demarrage', texture: 'À ajouter crue, conserver au frigo', tip: 'Très riche en oméga-3.' },
+  { id: 'beurre', name: 'Beurre', cat: 'matiere-grasse', phase: 'demarrage', texture: 'Une noisette dans la purée', allerg: 'lait', tip: 'Lait sous forme transformée.' },
+  { id: 'creme', name: 'Crème fraîche', cat: 'matiere-grasse', phase: 'textures', texture: 'Une cuillerée dans la purée', allerg: 'lait', tip: 'Source de matière grasse intéressante.' },
+
+  // LAITAGES
+  { id: 'yaourt', name: 'Yaourt nature (lait de vache)', cat: 'laitage', phase: 'demarrage', texture: 'Nature, sans sucre', allerg: 'lait', allergNote: 'Allergène pédiatrique majeur. Introduction précoce 4-6 mois recommandée.', tip: 'Choisir nature, entier, sans sucre.', priority: true },
+  { id: 'fromage-blanc', name: 'Fromage blanc', cat: 'laitage', phase: 'demarrage', texture: 'Nature', allerg: 'lait', tip: 'Entier, sans sucre.' },
+  { id: 'petit-suisse', name: 'Petit-suisse', cat: 'laitage', phase: 'demarrage', texture: 'Nature', allerg: 'lait', tip: 'Bonne portion calcique.' },
+  { id: 'fromage', name: 'Fromage pasteurisé', cat: 'laitage', phase: 'textures', texture: 'Petits morceaux ou râpé', allerg: 'lait', tip: "Pasteurisé jusqu'à 5 ans (listériose)." },
+
+  // ALLERGÈNES MAJEURS
+  { id: 'arachide', name: 'Arachide (purée fine)', cat: 'allergene', phase: 'demarrage', texture: 'Purée de cacahuète lisse diluée, ou poudre dans compote', allerg: 'arachide', allergNote: 'Allergène pédiatrique MAJEUR. Étude LEAP (NEJM) : introduction précoce 4-6 mois divise le risque par 5-7. À ne PAS retarder.', tip: 'JAMAIS en cacahuète entière (fausse route). Toujours en purée fine.', priority: true },
+  { id: 'noix', name: 'Fruits à coque (poudre)', cat: 'allergene', phase: 'demarrage', texture: 'En poudre, dans compote ou gâteau', allerg: 'fruits à coque', allergNote: 'Allergène pédiatrique majeur. Introduction précoce 4-6 mois recommandée, en poudre.', tip: 'Noisettes, amandes, noix... Jamais en morceaux avant 4 ans (fausse route).', priority: true },
+  { id: 'sesame', name: 'Sésame (tahini)', cat: 'allergene', phase: 'demarrage', texture: 'Purée de sésame (tahini) diluée', allerg: 'sésame', allergNote: 'Allergène pédiatrique majeur, en hausse en France. Introduction précoce 4-6 mois recommandée.', tip: 'Dans un yaourt ou une purée.', priority: true },
+  { id: 'crevette', name: 'Crevette', cat: 'allergene', phase: 'morceaux', texture: 'Bien cuite, hachée', allerg: 'crustacés', allergNote: 'Allergène UE 14. Le délai d\'introduction (8-12m) n\'est pas pour la prévention allergique mais pour des raisons de cuisson et digestibilité.', tip: "Bien cuite. Surveiller à l'introduction." },
+  { id: 'moutarde', name: 'Moutarde', cat: 'allergene', phase: 'familiale', texture: 'Évitée avant 1 an (épicé)', allerg: 'moutarde', allergNote: 'Allergène UE 14. Évitée jusqu\'à 12 mois pour le piquant, pas pour un enjeu allergénique.', tip: "Pas d'urgence d'introduction." },
+  { id: 'mollusques', name: 'Mollusques (moule, palourde)', cat: 'allergene', phase: 'morceaux', texture: 'Bien cuits, hachés', allerg: 'mollusques', allergNote: 'Allergène UE 14. Le délai d\'introduction est lié à la cuisson et au risque infectieux, pas à la prévention allergique.', tip: 'Toujours bien cuits.' },
+  { id: 'lupin', name: 'Lupin (farine)', cat: 'allergene', phase: 'textures', texture: 'En farine dans une préparation', allerg: 'lupin', allergNote: 'Allergène UE 14, peu commun en France.', tip: "Réaction croisée possible avec l'arachide." },
+
+  // AUTRES
+  { id: 'lin', name: 'Graines de lin moulues', cat: 'autre', phase: 'demarrage', texture: 'Moulues, saupoudrées', tip: 'Riches en oméga-3. Moudre minute (oxydation).' },
+  { id: 'chia', name: 'Graines de chia', cat: 'autre', phase: 'textures', texture: 'Hydratées (compote, yaourt)', tip: 'Toujours hydratées (gonflement œsophagien sinon).' },
+  { id: 'herbes', name: 'Herbes aromatiques', cat: 'autre', phase: 'demarrage', texture: 'Ciselées finement', tip: 'Persil, ciboulette, basilic : éveil aromatique sans sel.' },
+  { id: 'epices-douces', name: 'Épices douces', cat: 'autre', phase: 'textures', texture: 'Petites pincées', tip: 'Cannelle, curcuma, paprika doux ; pas de piquant.' },
+  { id: 'miel', name: 'Miel', cat: 'autre', phase: 'familiale', texture: 'INTERDIT avant 12 mois (botulisme infantile)', tip: 'INTERDICTION FORMELLE avant 1 an.' },
+];
+
+const CAT_LABEL = {
+  legume: 'Légumes', fruit: 'Fruits', cereale: 'Céréales & féculents',
+  proteine: 'Protéines', 'matiere-grasse': 'Matières grasses',
+  laitage: 'Laitages', allergene: 'Allergènes majeurs', autre: 'Autres'
+};
+
+const PHASES = {
+  demarrage: {
+    label: '4-6 mois', sub: 'Démarrage',
+    title: 'Démarrage de la diversification',
+    desc: "Purées très lisses. C'est la fenêtre clé pour introduire les allergènes majeurs (œuf, arachide, poisson, gluten, lait) : leur introduction précoce réduit significativement le risque d'allergie. Le lait reste la base (sein ou PPN, au moins 500 ml/j).",
+  },
+  textures: {
+    label: '6-8 mois', sub: 'Textures',
+    title: 'Évolution des textures',
+    desc: "Textures moulinées, écrasées, premiers morceaux fondants. Diversification du registre gustatif et aromatique. Lait : ~500 ml/j.",
+  },
+  morceaux: {
+    label: '8-12 mois', sub: 'Morceaux',
+    title: 'Morceaux fondants & autonomie',
+    desc: "Morceaux fondants à attraper (DME possible). Développement de la mastication. Trois repas + lait matin et soir.",
+  },
+  familiale: {
+    label: '12 mois +', sub: 'Famille',
+    title: 'Alimentation familiale',
+    desc: "Bébé peut manger comme la famille (textures adaptées, pas de sel/sucre ajoutés). Miel autorisé. 500 ml de lait de croissance/jour.",
+  },
+};
+
+const STORAGE_KEY = 'diversif-v1';
+const state = {
+  entries: [],
+  baby: { name: 'bébé', dob: null },
+  draft: { foods: [], form: 'puree', reaction: 'ras' },
+  currentTab: 'journal',
+  filter: 'all',
+  currentPhase: 'demarrage',
+  syncStatus: 'connecting', // connecting | online | offline | error
+};
+
+const docRef = doc(db, 'journals', JOURNAL_ID);
+
+// Listener temps réel : toute modification (par toi ou Léa) déclenche render()
+function startSync() {
+  onSnapshot(docRef, (snap) => {
+    if (snap.exists()) {
+      const data = snap.data();
+      state.entries = data.entries || [];
+      state.baby = data.baby || state.baby;
+      state.syncStatus = snap.metadata.fromCache ? 'offline' : 'online';
+    } else {
+      // Premier démarrage : pas encore de doc, on garde le state vide
+      state.syncStatus = 'online';
+    }
+    document.getElementById('setting-name').value = state.baby.name === 'bébé' ? '' : state.baby.name;
+    document.getElementById('setting-dob').value = state.baby.dob || '';
+    state.currentPhase = currentPhaseFromAge();
+    render();
+    updateSyncIndicator();
+  }, (err) => {
+    console.error('Firestore listener error:', err);
+    state.syncStatus = 'error';
+    updateSyncIndicator();
+  });
+}
+
+async function save() {
+  try {
+    await setDoc(docRef, { entries: state.entries, baby: state.baby, updatedAt: Date.now() });
+  } catch (e) {
+    console.error('Save failed', e);
+    // Pas d'alerte ici : avec la persistence offline, ça se synchronisera au retour du réseau
+  }
+}
+
+function updateSyncIndicator() {
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  const map = {
+    connecting: { txt: 'Connexion...', cls: 'sync-connecting' },
+    online: { txt: '● Synchronisé', cls: 'sync-online' },
+    offline: { txt: '◌ Hors ligne (reprise auto)', cls: 'sync-offline' },
+    error: { txt: '⚠ Erreur de synchro', cls: 'sync-error' },
+  };
+  const s = map[state.syncStatus] || map.connecting;
+  el.textContent = s.txt;
+  el.className = 'sync-indicator ' + s.cls;
+}
+
+function todayISO() { return new Date().toISOString().slice(0,10); }
+
+function formatDay(iso) {
+  const d = new Date(iso + 'T12:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const yesterday = new Date(today); yesterday.setDate(today.getDate()-1);
+  const dDate = new Date(d); dDate.setHours(0,0,0,0);
+  if (dDate.getTime() === today.getTime()) return "Aujourd'hui";
+  if (dDate.getTime() === yesterday.getTime()) return "Hier";
+  return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+function daysAgo(iso) {
+  const d = new Date(iso + 'T12:00:00');
+  const today = new Date(); today.setHours(12,0,0,0);
+  return Math.floor((today - d) / (1000*60*60*24));
+}
+function ageInMonths(iso) {
+  if (!state.baby.dob) return null;
+  const dob = new Date(state.baby.dob);
+  const d = iso ? new Date(iso) : new Date();
+  let months = (d.getFullYear() - dob.getFullYear()) * 12 + (d.getMonth() - dob.getMonth());
+  if (d.getDate() < dob.getDate()) months--;
+  return months;
+}
+function ageLabelAt(iso) {
+  if (!state.baby.dob) return null;
+  const m = ageInMonths(iso);
+  const dob = new Date(state.baby.dob);
+  const d = new Date(iso);
+  const anchor = new Date(dob.getFullYear(), dob.getMonth() + m, dob.getDate());
+  const days = Math.floor((d - anchor) / 86400000);
+  if (m === 0) return `${days} j`;
+  return `${m} mois${days > 7 ? ` et ${Math.round(days/7)} sem` : ''}`;
+}
+function currentPhaseFromAge() {
+  const m = ageInMonths();
+  if (m === null) return 'demarrage';
+  if (m < 6) return 'demarrage';
+  if (m < 8) return 'textures';
+  if (m < 12) return 'morceaux';
+  return 'familiale';
+}
+function findFood(name) {
+  const n = name.toLowerCase().trim();
+  return FOODS.find(f => f.name.toLowerCase() === n || f.id === n);
+}
+function reactionLabel(r) { return { ras: 'RAS', leger: 'Léger', surveil: 'À surveiller', reaction: 'Réaction' }[r] || r; }
+function formLabel(f) { return { puree: 'Purée lisse', mixe: 'Mouliné', ecrase: 'Écrasé', morceau: 'Morceau' }[f] || f; }
+function isTested(fid) { return state.entries.some(e => e.foods.includes(fid)); }
+function firstTested(fid) {
+  const dates = state.entries.filter(e => e.foods.includes(fid)).map(e => e.date).sort();
+  return dates[0] || null;
+}
+
+function render() {
+  renderHeader();
+  renderJournal();
+  renderReco();
+  renderObservation();
+  renderTested();
+  updateCounts();
+}
+
+function renderHeader() {
+  document.getElementById('baby-name').textContent = state.baby.name || 'bébé';
+  if (state.baby.dob) {
+    const age = ageLabelAt(todayISO());
+    const phase = PHASES[currentPhaseFromAge()];
+    document.getElementById('baby-age').textContent = `${age} · phase « ${phase.sub.toLowerCase()} » (${phase.label})`;
+  } else {
+    document.getElementById('baby-age').textContent = 'Renseigne la date de naissance dans Réglages';
+  }
+}
+
+function updateCounts() {
+  document.getElementById('count-journal').textContent = state.entries.length;
+  document.getElementById('count-obs').textContent = getObservationItems().length;
+  document.getElementById('count-tested').textContent = getTestedFoods().length;
+}
+
+function renderJournal() {
+  const el = document.getElementById('journal-content');
+  if (!state.entries.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-art">∅</div><p>Aucun repas enregistré.<br>Appuie sur + pour démarrer.</p></div>`;
+    return;
+  }
+  const sorted = [...state.entries].sort((a,b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+  const groups = {};
+  sorted.forEach(e => { (groups[e.date] = groups[e.date] || []).push(e); });
+  
+  el.innerHTML = Object.entries(groups).map(([date, items]) => `
+    <div class="day-group">
+      <div class="day-header">
+        <span>${formatDay(date)}</span>
+        ${state.baby.dob ? `<span class="age">· ${ageLabelAt(date)}</span>` : ''}
+      </div>
+      ${items.map(entry => renderEntry(entry)).join('')}
+    </div>
+  `).join('');
+  
+  el.querySelectorAll('.entry-delete').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      if (confirm('Supprimer ce repas ?')) {
+        state.entries = state.entries.filter(x => x.id !== id);
+        save(); render();
+      }
+    });
+  });
+  el.querySelectorAll('.entry').forEach(entry => {
+    let timer;
+    entry.addEventListener('touchstart', () => { timer = setTimeout(() => entry.classList.add('show-delete'), 500); });
+    entry.addEventListener('touchend', () => clearTimeout(timer));
+    entry.addEventListener('touchmove', () => clearTimeout(timer));
+  });
+}
+
+function renderEntry(entry) {
+  const foodObjs = entry.foods.map(fid => FOODS.find(f => f.id === fid) || { id: fid, name: fid });
+  const allergens = [...new Set(foodObjs.filter(f => f.allerg).map(f => f.allerg))];
+  return `
+    <div class="entry">
+      <button class="entry-delete" data-id="${entry.id}">×</button>
+      <div class="entry-foods">${foodObjs.map(f => f.name).join(' · ')}</div>
+      <div class="entry-meta">
+        <span>${formLabel(entry.form)}</span>
+        <span class="dot"></span>
+        <span class="reaction-pill reaction-${entry.reaction}">${reactionLabel(entry.reaction)}</span>
+        ${allergens.map(a => `<span class="allergen-badge">⚠ ${a}</span>`).join('')}
+      </div>
+      ${entry.notes ? `<div class="entry-notes">${entry.notes}</div>` : ''}
+    </div>
+  `;
+}
+
+function renderReco() {
+  const navEl = document.getElementById('phase-nav');
+  const currentPhase = currentPhaseFromAge();
+  navEl.innerHTML = Object.entries(PHASES).map(([key, p]) => `
+    <button class="phase-tab ${state.currentPhase === key ? 'active' : ''} ${currentPhase === key ? 'current' : ''}" data-phase="${key}">
+      ${p.label}
+      <span class="phase-tag">${p.sub}${currentPhase === key ? ' • actuel' : ''}</span>
+    </button>
+  `).join('');
+  navEl.querySelectorAll('.phase-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.currentPhase = btn.dataset.phase;
+      renderReco();
+    });
+  });
+
+  const phase = PHASES[state.currentPhase];
+  const phaseFoods = FOODS.filter(f => f.phase === state.currentPhase);
+  const tested = phaseFoods.filter(f => isTested(f.id)).length;
+  const total = phaseFoods.length;
+  const pct = total ? Math.round((tested/total) * 100) : 0;
+  
+  const byCat = {};
+  phaseFoods.forEach(f => { (byCat[f.cat] = byCat[f.cat] || []).push(f); });
+  const catOrder = state.currentPhase === 'demarrage'
+    ? ['allergene', 'legume', 'fruit', 'cereale', 'proteine', 'matiere-grasse', 'laitage', 'autre']
+    : ['legume', 'fruit', 'cereale', 'proteine', 'laitage', 'matiere-grasse', 'allergene', 'autre'];
+
+  let html = `
+    <div class="phase-intro">
+      <h3>${phase.title}</h3>
+      <p>${phase.desc}</p>
+      <div class="progress-summary">
+        <span><strong>${tested}</strong> / ${total} explorés</span>
+        <div class="progress-bar"><div class="progress-fill" style="width: ${pct}%"></div></div>
+        <span style="color: var(--ink-muted);">${pct}%</span>
+      </div>
+    </div>
+  `;
+
+  // Bannière des allergènes pédiatriques prioritaires (phase démarrage uniquement)
+  if (state.currentPhase === 'demarrage') {
+    const priorityFoods = FOODS.filter(f => f.priority);
+    const priorityTested = priorityFoods.filter(f => isTested(f.id)).length;
+    const priorityPct = Math.round((priorityTested / priorityFoods.length) * 100);
+    html += `
+      <div class="priority-banner">
+        <div class="priority-header">
+          <span class="priority-icon">★</span>
+          <div>
+            <div class="priority-title">Les 7 allergènes pédiatriques prioritaires</div>
+            <div class="priority-sub">À introduire idéalement entre 4 et 6 mois (fenêtre de tolérance, PNNS 4)</div>
+          </div>
+        </div>
+        <div class="priority-progress">
+          <span><strong>${priorityTested}</strong> / ${priorityFoods.length}</span>
+          <div class="progress-bar"><div class="progress-fill" style="width: ${priorityPct}%; background: var(--allergen);"></div></div>
+          <span style="color: var(--ink-muted);">${priorityPct}%</span>
+        </div>
+        <div class="priority-list">
+          ${priorityFoods.map(f => {
+            const t = isTested(f.id);
+            return `<button class="priority-chip ${t ? 'tested' : ''}" data-food="${f.id}">${t ? '✓ ' : ''}${f.allerg}</button>`;
+          }).join('')}
+        </div>
+        <div class="priority-note">
+          Les autres allergènes de la liste UE des 14 (céleri, soja, moutarde, crustacés, mollusques, lupin, sulfites) ne sont pas pédiatriquement prioritaires : pas d'urgence ni de retard impératif. À introduire comme les autres aliments, selon les opportunités.
+        </div>
+      </div>
+    `;
+  }
+
+
+  catOrder.forEach(cat => {
+    if (!byCat[cat]) return;
+    const items = byCat[cat].sort((a,b) => {
+      if (state.currentPhase === 'demarrage') {
+        // 1. Allergènes pédiatriques prioritaires d'abord
+        if (!!a.priority !== !!b.priority) return a.priority ? -1 : 1;
+        // 2. Puis autres allergènes
+        if (!!a.allerg !== !!b.allerg) return a.allerg ? -1 : 1;
+      }
+      return a.name.localeCompare(b.name);
+    });
+    const catTested = items.filter(f => isTested(f.id)).length;
+    html += `
+      <div class="cat-header">
+        <span>${CAT_LABEL[cat]}</span>
+        <span class="cat-count">${catTested}/${items.length}</span>
+      </div>
+      <div class="reco-grid">
+        ${items.map(f => {
+          const t = isTested(f.id);
+          const dateFirst = firstTested(f.id);
+          return `
+            <div class="reco-card ${t ? 'tested' : ''} ${f.allerg ? 'is-allergen' : ''} ${f.priority ? 'is-priority' : ''}" data-food="${f.id}">
+              <div class="check">${t ? '✓' : ''}</div>
+              ${f.priority ? '<div class="priority-star">★</div>' : ''}
+              <div class="reco-name">${f.name}</div>
+              ${t && dateFirst ? `<div class="first-date">Introduit ${formatDay(dateFirst).toLowerCase()}</div>` : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  });
+
+  document.getElementById('reco-content').innerHTML = html;
+  document.querySelectorAll('#reco-content .reco-card').forEach(card => {
+    card.addEventListener('click', () => openFiche(card.dataset.food));
+  });
+  document.querySelectorAll('#reco-content .priority-chip').forEach(chip => {
+    chip.addEventListener('click', () => openFiche(chip.dataset.food));
+  });
+}
+
+function getObservationItems() {
+  const firstSeen = {};
+  state.entries.forEach(e => {
+    e.foods.forEach(fid => {
+      if (!firstSeen[fid] || e.date < firstSeen[fid]) firstSeen[fid] = e.date;
+    });
+  });
+  return Object.entries(firstSeen)
+    .filter(([, date]) => daysAgo(date) < 3)
+    .map(([fid, date]) => ({ food: FOODS.find(f => f.id === fid) || { id: fid, name: fid }, since: date, daysObs: daysAgo(date) + 1 }))
+    .sort((a, b) => b.since.localeCompare(a.since));
+}
+
+function renderObservation() {
+  const el = document.getElementById('obs-content');
+  const items = getObservationItems();
+  if (!items.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-art">✓</div><p>Aucun aliment en observation.<br>Tous tes derniers essais ont passé le cap des 3 jours.</p></div>`;
+    return;
+  }
+  el.innerHTML = items.map(({food, since, daysObs}) => {
+    const isAll = !!food.allerg;
+    const ticks = [0,1,2].map(i => `<div class="tick ${i < daysObs ? 'done' : ''} ${isAll ? 'is-allergen' : ''}"></div>`).join('');
+    const remaining = 3 - daysObs;
+    return `
+      <div class="observation-card ${isAll ? 'is-allergen' : ''}">
+        <div class="observation-name">${food.name} ${isAll ? `<span class="allergen-badge" style="vertical-align: 3px;">⚠ ${food.allerg}</span>` : ''}</div>
+        <div class="observation-progress">${ticks}</div>
+        <div class="observation-status">
+          Introduit <strong>${formatDay(since).toLowerCase()}</strong> · ${remaining > 0 ? `encore <strong>${remaining} j</strong> d'observation` : 'observation terminée'}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function getTestedFoods() {
+  const seen = new Set();
+  const items = [];
+  state.entries.forEach(e => {
+    e.foods.forEach(fid => {
+      if (!seen.has(fid)) {
+        seen.add(fid);
+        const food = FOODS.find(f => f.id === fid) || { id: fid, name: fid, cat: 'autre' };
+        items.push({ food, first: e.date });
+      } else {
+        const existing = items.find(x => x.food.id === fid);
+        if (existing && e.date < existing.first) existing.first = e.date;
+      }
+    });
+  });
+  return items.sort((a,b) => a.food.name.localeCompare(b.food.name));
+}
+
+function renderTested() {
+  const el = document.getElementById('tested-content');
+  let items = getTestedFoods();
+  if (state.filter === 'allergen') items = items.filter(x => x.food.allerg);
+  else if (state.filter !== 'all') items = items.filter(x => x.food.cat === state.filter);
+  
+  if (!items.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-art">·</div><p>Rien dans cette catégorie.</p></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="tested-grid">${items.map(({food, first}) => `
+    <div class="tested-item ${food.allerg ? 'is-allergen' : ''}" data-food="${food.id}">
+      <div class="tested-name">${food.name}</div>
+      <div class="tested-date">${new Date(first + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</div>
+    </div>
+  `).join('')}</div>`;
+  document.querySelectorAll('#tested-content .tested-item').forEach(card => {
+    card.addEventListener('click', () => openFiche(card.dataset.food));
+  });
+}
+
+function openFiche(fid) {
+  const food = FOODS.find(f => f.id === fid);
+  if (!food) return;
+  const t = isTested(fid);
+  const firstDate = firstTested(fid);
+  const obsItem = getObservationItems().find(x => x.food.id === fid);
+  
+  let html = `
+    <div class="fiche-eyebrow">${CAT_LABEL[food.cat]} · phase ${PHASES[food.phase].label}</div>
+    <div class="fiche-title">${food.name}</div>
+    <div class="fiche-cat">${PHASES[food.phase].sub}</div>
+  `;
+
+  if (food.allerg) {
+    const label = food.priority 
+      ? `★ Allergène pédiatrique prioritaire — ${food.allerg}`
+      : `Allergène UE 14 — ${food.allerg}`;
+    html += `<div class="fiche-allergen-banner ${food.priority ? 'is-priority' : ''}"><strong>${label}</strong>${food.allergNote ? `<br>${food.allergNote}` : ''}</div>`;
+  }
+
+  if (t) {
+    html += `<div class="fiche-status-tested">✓ <strong>Déjà introduit</strong> le ${new Date(firstDate + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}${obsItem ? ` · en cours d'observation` : ''}</div>`;
+  }
+
+  html += `
+    <div class="fiche-row">
+      <div class="fiche-label">Phase</div>
+      <div class="fiche-value">${PHASES[food.phase].title}<br><em>${PHASES[food.phase].label}</em></div>
+    </div>
+    <div class="fiche-row">
+      <div class="fiche-label">Forme conseillée</div>
+      <div class="fiche-value">${food.texture}</div>
+    </div>
+    ${food.tip ? `
+    <div class="fiche-row">
+      <div class="fiche-label">Conseil</div>
+      <div class="fiche-value"><em>${food.tip}</em></div>
+    </div>` : ''}
+    ${food.allerg ? `
+    <div class="fiche-row">
+      <div class="fiche-label">Allergène</div>
+      <div class="fiche-value">${food.allerg}</div>
+    </div>` : ''}
+  `;
+
+  if (!t) {
+    html += `<button class="fiche-action-btn" id="fiche-add-btn">+ Ajouter à un repas</button>`;
+  } else {
+    html += `<button class="fiche-action-btn" id="fiche-close-btn">Fermer</button>`;
+  }
+
+  document.getElementById('fiche-content').innerHTML = html;
+  document.getElementById('modal-fiche').classList.add('show');
+  document.body.style.overflow = 'hidden';
+
+  const addBtn = document.getElementById('fiche-add-btn');
+  if (addBtn) {
+    addBtn.addEventListener('click', () => {
+      closeFiche();
+      openAddModal();
+      if (!state.draft.foods.includes(fid)) state.draft.foods.push(fid);
+      renderSelectedFoods();
+    });
+  }
+  const closeBtn = document.getElementById('fiche-close-btn');
+  if (closeBtn) closeBtn.addEventListener('click', closeFiche);
+}
+
+function closeFiche() {
+  document.getElementById('modal-fiche').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('modal-fiche').addEventListener('click', e => {
+  if (e.target.id === 'modal-fiche') closeFiche();
+});
+
+function openAddModal() {
+  state.draft = { foods: [], form: 'puree', reaction: 'ras' };
+  document.getElementById('f-date').value = todayISO();
+  document.getElementById('f-food').value = '';
+  document.getElementById('f-notes').value = '';
+  renderSelectedFoods();
+  resetSegmented('seg-form', 'puree');
+  resetSegmented('seg-reaction', 'ras');
+  document.getElementById('modal-add').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeAddModal() {
+  document.getElementById('modal-add').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function renderSelectedFoods() {
+  const el = document.getElementById('selected-foods');
+  if (!state.draft.foods.length) { el.innerHTML = '<span style="font-size:12px; color: var(--ink-faint); align-self:center;">Aucun aliment sélectionné</span>'; return; }
+  el.innerHTML = state.draft.foods.map(fid => {
+    const f = FOODS.find(x => x.id === fid) || { id: fid, name: fid };
+    return `<span class="food-tag ${f.allerg ? 'is-allergen' : ''}">${f.name}<button class="remove" data-id="${fid}">×</button></span>`;
+  }).join('');
+  el.querySelectorAll('.remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.draft.foods = state.draft.foods.filter(x => x !== btn.dataset.id);
+      renderSelectedFoods();
+    });
+  });
+}
+
+function resetSegmented(id, val) {
+  document.querySelectorAll(`#${id} .seg-option`).forEach(b => b.classList.toggle('active', b.dataset.val === val));
+}
+
+function setupAutocomplete() {
+  const input = document.getElementById('f-food');
+  const sugg = document.getElementById('food-suggestions');
+  let highlighted = -1;
+  
+  function showSuggestions(q) {
+    if (!q || q.length < 1) { sugg.classList.remove('show'); return; }
+    const lq = q.toLowerCase();
+    const matches = FOODS.filter(f => 
+      f.name.toLowerCase().includes(lq) && !state.draft.foods.includes(f.id)
+    ).slice(0, 8);
+    const exactMatch = FOODS.find(f => f.name.toLowerCase() === lq);
+    
+    if (!matches.length && !exactMatch) {
+      sugg.innerHTML = `<div class="food-sugg-item" data-custom="${q}"><span>Ajouter "<strong>${q}</strong>"</span><span class="meta">custom</span></div>`;
+    } else {
+      sugg.innerHTML = matches.map(f => `
+        <div class="food-sugg-item" data-id="${f.id}">
+          <span>${f.name}</span>
+          <span class="meta ${f.allerg ? 'allergen' : ''}">${f.allerg ? '⚠ ' + f.allerg : PHASES[f.phase].label}</span>
+        </div>
+      `).join('');
+    }
+    sugg.classList.add('show');
+    highlighted = -1;
+    
+    sugg.querySelectorAll('.food-sugg-item').forEach(item => {
+      item.addEventListener('click', () => pickItem(item));
+    });
+  }
+  
+  function pickItem(item) {
+    const id = item.dataset.id;
+    const custom = item.dataset.custom;
+    if (id) {
+      if (!state.draft.foods.includes(id)) state.draft.foods.push(id);
+    } else if (custom) {
+      const customId = 'custom-' + custom.toLowerCase().replace(/\s+/g, '-');
+      if (!FOODS.find(f => f.id === customId)) {
+        FOODS.push({ id: customId, name: custom, cat: 'autre', phase: 'demarrage', texture: "À adapter selon l'âge.", tip: 'Aliment ajouté manuellement.' });
+      }
+      if (!state.draft.foods.includes(customId)) state.draft.foods.push(customId);
+    }
+    input.value = '';
+    sugg.classList.remove('show');
+    renderSelectedFoods();
+    input.focus();
+  }
+  
+  input.addEventListener('input', e => showSuggestions(e.target.value));
+  input.addEventListener('focus', e => { if (e.target.value) showSuggestions(e.target.value); });
+  input.addEventListener('blur', () => setTimeout(() => sugg.classList.remove('show'), 200));
+  
+  input.addEventListener('keydown', e => {
+    const items = sugg.querySelectorAll('.food-sugg-item');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      highlighted = Math.min(highlighted + 1, items.length - 1);
+      items.forEach((it, i) => it.classList.toggle('highlighted', i === highlighted));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      highlighted = Math.max(highlighted - 1, 0);
+      items.forEach((it, i) => it.classList.toggle('highlighted', i === highlighted));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (highlighted >= 0 && items[highlighted]) pickItem(items[highlighted]);
+      else if (items[0]) pickItem(items[0]);
+    } else if (e.key === 'Escape') {
+      sugg.classList.remove('show');
+    }
+  });
+}
+
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    state.currentTab = btn.dataset.tab;
+    if (btn.dataset.tab === 'reco') {
+      state.currentPhase = currentPhaseFromAge();
+      renderReco();
+    }
+  });
+});
+
+document.querySelectorAll('.filter-bar .chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-bar .chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.filter = btn.dataset.filter;
+    renderTested();
+  });
+});
+
+document.getElementById('fab').addEventListener('click', openAddModal);
+document.getElementById('btn-cancel').addEventListener('click', closeAddModal);
+document.getElementById('modal-add').addEventListener('click', e => {
+  if (e.target.id === 'modal-add') closeAddModal();
+});
+
+document.querySelectorAll('#seg-form .seg-option').forEach(btn => {
+  btn.addEventListener('click', () => {
+    resetSegmented('seg-form', btn.dataset.val);
+    state.draft.form = btn.dataset.val;
+  });
+});
+document.querySelectorAll('#seg-reaction .seg-option').forEach(btn => {
+  btn.addEventListener('click', () => {
+    resetSegmented('seg-reaction', btn.dataset.val);
+    state.draft.reaction = btn.dataset.val;
+  });
+});
+
+document.getElementById('btn-save').addEventListener('click', () => {
+  const pending = document.getElementById('f-food').value.trim();
+  if (pending) {
+    const existing = findFood(pending);
+    if (existing) {
+      if (!state.draft.foods.includes(existing.id)) state.draft.foods.push(existing.id);
+    } else {
+      const customId = 'custom-' + pending.toLowerCase().replace(/\s+/g, '-');
+      if (!FOODS.find(f => f.id === customId)) FOODS.push({ id: customId, name: pending, cat: 'autre', phase: 'demarrage', texture: "À adapter selon l'âge." });
+      if (!state.draft.foods.includes(customId)) state.draft.foods.push(customId);
+    }
+  }
+  if (!state.draft.foods.length) { alert('Ajoute au moins un aliment.'); return; }
+  const entry = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    date: document.getElementById('f-date').value,
+    foods: [...state.draft.foods],
+    form: state.draft.form,
+    reaction: state.draft.reaction,
+    notes: document.getElementById('f-notes').value.trim(),
+    createdAt: Date.now(),
+  };
+  state.entries.push(entry);
+  save();
+  closeAddModal();
+  render();
+});
+
+document.getElementById('setting-name').addEventListener('change', e => {
+  state.baby.name = e.target.value.trim() || 'bébé';
+  save(); renderHeader();
+});
+document.getElementById('setting-dob').addEventListener('change', e => {
+  state.baby.dob = e.target.value;
+  state.currentPhase = currentPhaseFromAge();
+  save(); render();
+});
+
+document.getElementById('btn-export').addEventListener('click', () => {
+  const data = JSON.stringify({ entries: state.entries, baby: state.baby, exportedAt: new Date().toISOString() }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `diversif-${state.baby.name}-${todayISO()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('btn-import').addEventListener('click', () => {
+  document.getElementById('import-file').click();
+});
+document.getElementById('import-file').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.entries) throw new Error('Format invalide');
+      if (confirm(`Importer ${data.entries.length} entrée(s) ? Cela écrasera tes données actuelles.`)) {
+        state.entries = data.entries;
+        if (data.baby) state.baby = data.baby;
+        save(); render();
+        document.getElementById('setting-name').value = state.baby.name;
+        document.getElementById('setting-dob').value = state.baby.dob || '';
+      }
+    } catch(err) {
+      alert("Erreur lors de l'import : " + err.message);
+    }
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById('btn-clear').addEventListener('click', async () => {
+  if (confirm('Effacer toutes les données ? Cette action est irréversible et sera répliquée sur tous les appareils synchronisés.')) {
+    state.entries = [];
+    state.baby = { name: 'bébé', dob: null };
+    document.getElementById('setting-name').value = '';
+    document.getElementById('setting-dob').value = '';
+    await save();
+    render();
+  }
+});
+
+setupAutocomplete();
+
+// Démarrage du sync temps réel — render() sera appelé automatiquement
+// à chaque mise à jour Firestore (locale ou distante)
+startSync();
+updateSyncIndicator();
+</script>
+</body>
+</html>
