@@ -208,6 +208,124 @@ section.active { display: block; }
 .chip { flex-shrink: 0; padding: 6px 12px; background: var(--bg-card); border: 1px solid var(--line); border-radius: 20px; font-size: 12px; font-weight: 500; color: var(--ink-muted); cursor: pointer; white-space: nowrap; }
 .chip.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 
+.entry-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 4px;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+}
+.entry:hover .entry-actions, .entry:active .entry-actions { opacity: 1; }
+.entry-edit, .entry-delete {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--ink-muted);
+  padding: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.entry-edit:active { background: var(--ink); color: var(--bg); }
+.entry-delete:active { background: var(--reaction); color: var(--bg); border-color: var(--reaction); }
+.entry-delete { font-size: 16px; }
+@media (hover: none) {
+  .entry-actions { opacity: 0.7; }
+}
+
+.entry-fat {
+  margin-top: 4px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-muted);
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(184, 84, 58, 0.08);
+  color: var(--accent);
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* Toast (annuler suppression) */
+.toast {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--ink);
+  color: var(--bg);
+  padding: 12px 16px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.25s, transform 0.25s;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.25);
+  max-width: calc(100% - 32px);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.hide { opacity: 0; transform: translateX(-50%) translateY(20px); }
+.toast-action {
+  background: rgba(255,255,255,0.18);
+  border: none;
+  color: var(--bg);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 14px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Sections de l'onglet Observation */
+.obs-section-header {
+  margin: 18px 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--line);
+}
+.obs-section-header:first-child { margin-top: 0; }
+.obs-section-title {
+  display: block;
+  font-family: 'Fraunces', serif;
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.obs-section-sub {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-muted);
+  margin-top: 2px;
+  font-style: italic;
+}
+.obs-priority-header .obs-section-title { color: var(--allergen); }
+.obs-priority-header { border-bottom-color: rgba(193,74,43,0.25); }
+.observation-card.is-priority {
+  border-left-width: 4px;
+  border-left-color: var(--allergen);
+}
+.observation-card.is-other {
+  background: var(--bg-card);
+  border-left: 2px solid var(--line);
+  border-left-color: var(--line);
+}
+
+
 .observation-card { background: linear-gradient(135deg, #fbf8f2 0%, #f5ecdc 100%); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 10px; }
 .observation-card.is-allergen { border-left-color: var(--allergen); background: linear-gradient(135deg, #fbf8f2 0%, #fae6dd 100%); }
 .observation-name { font-family: 'Fraunces', serif; font-weight: 500; font-size: 18px; letter-spacing: -0.01em; }
@@ -381,8 +499,8 @@ section.active { display: block; }
 <div class="modal-overlay" id="modal-add">
   <div class="modal">
     <div class="modal-handle"></div>
-    <h2>Nouveau repas</h2>
-    <div class="modal-sub">Saisis rapidement, tu peux corriger après.</div>
+    <h2 id="modal-add-title">Nouveau repas</h2>
+    <div class="modal-sub" id="modal-add-sub">Saisis rapidement, tu peux corriger après.</div>
 
     <div class="field"><label>Date</label><input type="date" id="f-date"></div>
 
@@ -393,6 +511,24 @@ section.active { display: block; }
         <input type="text" id="f-food" placeholder="Tape un aliment..." autocomplete="off">
         <div class="food-suggestions" id="food-suggestions"></div>
       </div>
+    </div>
+
+    <div class="field">
+      <label>Matière grasse ajoutée (facultatif)</label>
+      <select id="f-fat">
+        <option value="">— Aucune —</option>
+        <option value="huile-colza">Huile de colza</option>
+        <option value="huile-olive">Huile d'olive</option>
+        <option value="huile-noix">Huile de noix</option>
+        <option value="huile-lin">Huile de lin</option>
+        <option value="huile-tournesol">Huile de tournesol</option>
+        <option value="huile-avocat">Huile d'avocat</option>
+        <option value="huile-4">Mélange 4 huiles bébé</option>
+        <option value="beurre">Beurre</option>
+        <option value="creme">Crème fraîche</option>
+        <option value="__custom__">Autre (saisie libre)…</option>
+      </select>
+      <input type="text" id="f-fat-custom" placeholder="Nom de la matière grasse" style="margin-top: 8px; display: none;">
     </div>
 
     <div class="field">
@@ -536,6 +672,9 @@ const FOODS = [
   { id: 'huile-olive', name: "Huile d'olive", cat: 'matiere-grasse', phase: 'demarrage', texture: 'À ajouter crue', tip: 'Alterner avec colza pour la diversité.' },
   { id: 'huile-noix', name: 'Huile de noix', cat: 'matiere-grasse', phase: 'demarrage', texture: 'À ajouter crue', allerg: 'fruits à coque', tip: "Bonne source d'oméga-3." },
   { id: 'huile-lin', name: 'Huile de lin', cat: 'matiere-grasse', phase: 'demarrage', texture: 'À ajouter crue, conserver au frigo', tip: 'Très riche en oméga-3.' },
+  { id: 'huile-tournesol', name: 'Huile de tournesol', cat: 'matiere-grasse', phase: 'demarrage', texture: 'À ajouter crue', tip: 'Source de vitamine E.' },
+  { id: 'huile-avocat', name: "Huile d'avocat", cat: 'matiere-grasse', phase: 'demarrage', texture: 'À ajouter crue', tip: 'Profil lipidique intéressant.' },
+  { id: 'huile-4', name: 'Mélange 4 huiles bébé', cat: 'matiere-grasse', phase: 'demarrage', texture: 'À ajouter crue, à alterner avec d\'autres', tip: 'Quintesens, Vigean, Bio Planète... formulation équilibrée en oméga 3/6/9.' },
   { id: 'beurre', name: 'Beurre', cat: 'matiere-grasse', phase: 'demarrage', texture: 'Une noisette dans la purée', allerg: 'lait', tip: 'Lait sous forme transformée.' },
   { id: 'creme', name: 'Crème fraîche', cat: 'matiere-grasse', phase: 'textures', texture: 'Une cuillerée dans la purée', allerg: 'lait', tip: 'Source de matière grasse intéressante.' },
 
@@ -637,6 +776,52 @@ async function save() {
   }
 }
 
+// Suppression d'un repas avec possibilité d'annuler pendant 5 secondes
+let undoTimer = null;
+function deleteEntryWithUndo(entry) {
+  const snapshot = { ...entry };
+  state.entries = state.entries.filter(x => x.id !== entry.id);
+  save();
+  render();
+  showToast(`Repas supprimé`, () => {
+    // Restauration : on remet l'entry au même endroit
+    state.entries.push(snapshot);
+    save();
+    render();
+  });
+}
+
+function showToast(message, onUndo) {
+  const existing = document.getElementById('toast');
+  if (existing) existing.remove();
+  if (undoTimer) clearTimeout(undoTimer);
+  
+  const toast = document.createElement('div');
+  toast.id = 'toast';
+  toast.className = 'toast';
+  toast.innerHTML = `
+    <span>${message}</span>
+    <button class="toast-action">Annuler</button>
+  `;
+  document.body.appendChild(toast);
+  
+  toast.querySelector('.toast-action').addEventListener('click', () => {
+    if (onUndo) onUndo();
+    toast.classList.add('hide');
+    setTimeout(() => toast.remove(), 200);
+    if (undoTimer) clearTimeout(undoTimer);
+  });
+  
+  // Anim entrée
+  setTimeout(() => toast.classList.add('show'), 10);
+  
+  // Auto-disparition après 5s
+  undoTimer = setTimeout(() => {
+    toast.classList.add('hide');
+    setTimeout(() => toast.remove(), 200);
+  }, 5000);
+}
+
 function updateSyncIndicator() {
   const el = document.getElementById('sync-indicator');
   if (!el) return;
@@ -699,9 +884,9 @@ function findFood(name) {
 }
 function reactionLabel(r) { return { ras: 'RAS', leger: 'Léger', surveil: 'À surveiller', reaction: 'Réaction' }[r] || r; }
 function formLabel(f) { return { puree: 'Purée lisse', mixe: 'Mouliné', ecrase: 'Écrasé', morceau: 'Morceau' }[f] || f; }
-function isTested(fid) { return state.entries.some(e => e.foods.includes(fid)); }
+function isTested(fid) { return state.entries.some(e => e.foods.includes(fid) || e.fat === fid); }
 function firstTested(fid) {
-  const dates = state.entries.filter(e => e.foods.includes(fid)).map(e => e.date).sort();
+  const dates = state.entries.filter(e => e.foods.includes(fid) || e.fat === fid).map(e => e.date).sort();
   return dates[0] || null;
 }
 
@@ -755,27 +940,40 @@ function renderJournal() {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const id = btn.dataset.id;
+      const entry = state.entries.find(x => x.id === id);
+      if (!entry) return;
       if (confirm('Supprimer ce repas ?')) {
-        state.entries = state.entries.filter(x => x.id !== id);
-        save(); render();
+        deleteEntryWithUndo(entry);
       }
     });
   });
-  el.querySelectorAll('.entry').forEach(entry => {
-    let timer;
-    entry.addEventListener('touchstart', () => { timer = setTimeout(() => entry.classList.add('show-delete'), 500); });
-    entry.addEventListener('touchend', () => clearTimeout(timer));
-    entry.addEventListener('touchmove', () => clearTimeout(timer));
+  el.querySelectorAll('.entry-edit').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openEditModal(btn.dataset.id);
+    });
   });
+}
+
+function fatLabel(entry) {
+  if (!entry.fat) return '';
+  if (entry.fat === '__custom__') return entry.fatCustom || '';
+  const f = FOODS.find(x => x.id === entry.fat);
+  return f ? f.name : '';
 }
 
 function renderEntry(entry) {
   const foodObjs = entry.foods.map(fid => FOODS.find(f => f.id === fid) || { id: fid, name: fid });
   const allergens = [...new Set(foodObjs.filter(f => f.allerg).map(f => f.allerg))];
+  const fat = fatLabel(entry);
   return `
     <div class="entry">
-      <button class="entry-delete" data-id="${entry.id}">×</button>
+      <div class="entry-actions">
+        <button class="entry-edit" data-id="${entry.id}" aria-label="Modifier">✎</button>
+        <button class="entry-delete" data-id="${entry.id}" aria-label="Supprimer">×</button>
+      </div>
       <div class="entry-foods">${foodObjs.map(f => f.name).join(' · ')}</div>
+      ${fat ? `<div class="entry-fat">+ ${fat}</div>` : ''}
       <div class="entry-meta">
         <span>${formLabel(entry.form)}</span>
         <span class="dot"></span>
@@ -909,6 +1107,10 @@ function getObservationItems() {
     e.foods.forEach(fid => {
       if (!firstSeen[fid] || e.date < firstSeen[fid]) firstSeen[fid] = e.date;
     });
+    // La matière grasse compte comme un aliment introduit
+    if (e.fat && e.fat !== '__custom__') {
+      if (!firstSeen[e.fat] || e.date < firstSeen[e.fat]) firstSeen[e.fat] = e.date;
+    }
   });
   return Object.entries(firstSeen)
     .filter(([, date]) => daysAgo(date) < 3)
@@ -923,26 +1125,65 @@ function renderObservation() {
     el.innerHTML = `<div class="empty"><div class="empty-art">✓</div><p>Aucun aliment en observation.<br>Tous tes derniers essais ont passé le cap des 3 jours.</p></div>`;
     return;
   }
-  el.innerHTML = items.map(({food, since, daysObs}) => {
-    const isAll = !!food.allerg;
-    const ticks = [0,1,2].map(i => `<div class="tick ${i < daysObs ? 'done' : ''} ${isAll ? 'is-allergen' : ''}"></div>`).join('');
-    const remaining = 3 - daysObs;
-    return `
-      <div class="observation-card ${isAll ? 'is-allergen' : ''}">
-        <div class="observation-name">${food.name} ${isAll ? `<span class="allergen-badge" style="vertical-align: 3px;">⚠ ${food.allerg}</span>` : ''}</div>
-        <div class="observation-progress">${ticks}</div>
-        <div class="observation-status">
-          Introduit <strong>${formatDay(since).toLowerCase()}</strong> · ${remaining > 0 ? `encore <strong>${remaining} j</strong> d'observation` : 'observation terminée'}
-        </div>
+  
+  // Séparation : allergènes prioritaires d'un côté, autres de l'autre
+  const priorityItems = items.filter(x => x.food.priority);
+  const otherItems = items.filter(x => !x.food.priority);
+  
+  let html = '';
+  
+  if (priorityItems.length) {
+    html += `
+      <div class="obs-section-header obs-priority-header">
+        <span class="obs-section-title">★ Allergènes prioritaires en cours</span>
+        <span class="obs-section-sub">3 jours d'attente conseillés avant d'introduire le prochain allergène prioritaire</span>
       </div>
     `;
-  }).join('');
+    html += priorityItems.map(({food, since, daysObs}) => {
+      const ticks = [0,1,2].map(i => `<div class="tick ${i < daysObs ? 'done' : ''} is-allergen"></div>`).join('');
+      const remaining = 3 - daysObs;
+      return `
+        <div class="observation-card is-priority is-allergen">
+          <div class="observation-name">${food.name} ${food.allerg ? `<span class="allergen-badge" style="vertical-align: 3px;">⚠ ${food.allerg}</span>` : ''}</div>
+          <div class="observation-progress">${ticks}</div>
+          <div class="observation-status">
+            Introduit <strong>${formatDay(since).toLowerCase()}</strong> · ${remaining > 0 ? `encore <strong>${remaining} j</strong> à surveiller` : 'observation terminée'}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  if (otherItems.length) {
+    html += `
+      <div class="obs-section-header obs-other-header">
+        <span class="obs-section-title">Récemment introduits</span>
+        <span class="obs-section-sub">Aliments non-allergènes — pas de délai d'attente nécessaire, c'est juste pour information</span>
+      </div>
+    `;
+    html += otherItems.map(({food, since, daysObs}) => {
+      const isAll = !!food.allerg;
+      const ticks = [0,1,2].map(i => `<div class="tick ${i < daysObs ? 'done' : ''}"></div>`).join('');
+      return `
+        <div class="observation-card is-other">
+          <div class="observation-name">${food.name} ${isAll ? `<span class="allergen-badge" style="vertical-align: 3px;">⚠ ${food.allerg}</span>` : ''}</div>
+          <div class="observation-progress">${ticks}</div>
+          <div class="observation-status">
+            Introduit <strong>${formatDay(since).toLowerCase()}</strong>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  el.innerHTML = html;
 }
 
 function getTestedFoods() {
   const seen = new Set();
   const items = [];
   state.entries.forEach(e => {
+    // aliments principaux
     e.foods.forEach(fid => {
       if (!seen.has(fid)) {
         seen.add(fid);
@@ -953,6 +1194,17 @@ function getTestedFoods() {
         if (existing && e.date < existing.first) existing.first = e.date;
       }
     });
+    // matière grasse (pas si "autre/custom" — c'est libre, on ne crée pas d'entrée FOODS)
+    if (e.fat && e.fat !== '__custom__') {
+      if (!seen.has(e.fat)) {
+        seen.add(e.fat);
+        const food = FOODS.find(f => f.id === e.fat) || { id: e.fat, name: e.fat, cat: 'matiere-grasse' };
+        items.push({ food, first: e.date });
+      } else {
+        const existing = items.find(x => x.food.id === e.fat);
+        if (existing && e.date < existing.first) existing.first = e.date;
+      }
+    }
   });
   return items.sort((a,b) => a.food.name.localeCompare(b.food.name));
 }
@@ -1056,16 +1308,50 @@ document.getElementById('modal-fiche').addEventListener('click', e => {
 });
 
 function openAddModal() {
-  state.draft = { foods: [], form: 'puree', reaction: 'ras' };
+  state.draft = { foods: [], form: 'puree', reaction: 'ras', fat: '', fatCustom: '', editingId: null };
+  document.getElementById('modal-add-title').textContent = 'Nouveau repas';
+  document.getElementById('modal-add-sub').textContent = 'Saisis rapidement, tu peux corriger après.';
   document.getElementById('f-date').value = todayISO();
   document.getElementById('f-food').value = '';
   document.getElementById('f-notes').value = '';
+  document.getElementById('f-fat').value = '';
+  document.getElementById('f-fat-custom').value = '';
+  document.getElementById('f-fat-custom').style.display = 'none';
   renderSelectedFoods();
   resetSegmented('seg-form', 'puree');
   resetSegmented('seg-reaction', 'ras');
   document.getElementById('modal-add').classList.add('show');
   document.body.style.overflow = 'hidden';
 }
+
+function openEditModal(entryId) {
+  const entry = state.entries.find(e => e.id === entryId);
+  if (!entry) return;
+  state.draft = {
+    foods: [...entry.foods],
+    form: entry.form,
+    reaction: entry.reaction,
+    fat: entry.fat || '',
+    fatCustom: entry.fatCustom || '',
+    editingId: entry.id,
+  };
+  document.getElementById('modal-add-title').textContent = 'Modifier le repas';
+  document.getElementById('modal-add-sub').textContent = 'Corrige ce que tu veux puis enregistre.';
+  document.getElementById('f-date').value = entry.date;
+  document.getElementById('f-food').value = '';
+  document.getElementById('f-notes').value = entry.notes || '';
+  // Pré-remplir la matière grasse
+  const isCustom = entry.fat === '__custom__';
+  document.getElementById('f-fat').value = entry.fat || '';
+  document.getElementById('f-fat-custom').value = entry.fatCustom || '';
+  document.getElementById('f-fat-custom').style.display = isCustom ? 'block' : 'none';
+  renderSelectedFoods();
+  resetSegmented('seg-form', entry.form);
+  resetSegmented('seg-reaction', entry.reaction);
+  document.getElementById('modal-add').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
 function closeAddModal() {
   document.getElementById('modal-add').classList.remove('show');
   document.body.style.overflow = '';
@@ -1218,19 +1504,52 @@ document.getElementById('btn-save').addEventListener('click', () => {
     }
   }
   if (!state.draft.foods.length) { alert('Ajoute au moins un aliment.'); return; }
-  const entry = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
-    date: document.getElementById('f-date').value,
-    foods: [...state.draft.foods],
-    form: state.draft.form,
-    reaction: state.draft.reaction,
-    notes: document.getElementById('f-notes').value.trim(),
-    createdAt: Date.now(),
-  };
-  state.entries.push(entry);
+  
+  // Récupérer matière grasse
+  const fatValue = document.getElementById('f-fat').value;
+  const fatCustom = document.getElementById('f-fat-custom').value.trim();
+  
+  if (state.draft.editingId) {
+    // MODE ÉDITION : on remplace l'entry existante
+    const idx = state.entries.findIndex(e => e.id === state.draft.editingId);
+    if (idx >= 0) {
+      state.entries[idx] = {
+        ...state.entries[idx],
+        date: document.getElementById('f-date').value,
+        foods: [...state.draft.foods],
+        form: state.draft.form,
+        reaction: state.draft.reaction,
+        notes: document.getElementById('f-notes').value.trim(),
+        fat: fatValue,
+        fatCustom: fatValue === '__custom__' ? fatCustom : '',
+        updatedAt: Date.now(),
+      };
+    }
+  } else {
+    // MODE CRÉATION
+    const entry = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+      date: document.getElementById('f-date').value,
+      foods: [...state.draft.foods],
+      form: state.draft.form,
+      reaction: state.draft.reaction,
+      notes: document.getElementById('f-notes').value.trim(),
+      fat: fatValue,
+      fatCustom: fatValue === '__custom__' ? fatCustom : '',
+      createdAt: Date.now(),
+    };
+    state.entries.push(entry);
+  }
   save();
   closeAddModal();
   render();
+});
+
+// Toggle champ matière grasse "Autre"
+document.getElementById('f-fat').addEventListener('change', e => {
+  const customField = document.getElementById('f-fat-custom');
+  customField.style.display = e.target.value === '__custom__' ? 'block' : 'none';
+  if (e.target.value !== '__custom__') customField.value = '';
 });
 
 document.getElementById('setting-name').addEventListener('change', e => {
