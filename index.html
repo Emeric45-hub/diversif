@@ -210,11 +210,70 @@ section.active { display: block; }
 .reco-card .first-date { font-size: 9px; margin-top: 3px; letter-spacing: 0.04em; font-style: italic; color: rgba(255,255,255,0.55); }
 
 .tested-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
-.tested-item { background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; position: relative; cursor: pointer; }
+.tested-item { background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; position: relative; cursor: pointer; padding-right: 36px; }
 .tested-item.is-allergen { border-color: rgba(193,74,43,0.3); background: rgba(193,74,43,0.03); }
 .tested-name { font-family: 'Fraunces', serif; font-weight: 500; font-size: 14px; line-height: 1.2; }
-.tested-date { font-size: 10px; color: var(--ink-faint); letter-spacing: 0.04em; text-transform: uppercase; margin-top: 4px; }
+.tested-meta { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+.tested-date { font-size: 10px; color: var(--ink-faint); letter-spacing: 0.04em; text-transform: uppercase; }
+.tested-count { font-size: 10px; color: var(--ink-muted); font-weight: 600; letter-spacing: 0.02em; }
 .tested-item.is-allergen .tested-name::after { content: '⚠'; margin-left: 4px; color: var(--allergen); font-size: 11px; }
+
+/* Badge compteur dans le coin */
+.tested-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink-muted);
+}
+.tested-item.is-discovery {
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(212,167,58,0.06) 100%);
+  border-color: rgba(212,167,58,0.3);
+}
+.tested-item.is-discovery .tested-badge {
+  background: rgba(212,167,58,0.18);
+  border-color: rgba(212,167,58,0.5);
+  color: #8a6b1a;
+}
+.tested-item.is-learning {
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(184,84,58,0.06) 100%);
+  border-color: rgba(184,84,58,0.25);
+}
+.tested-item.is-learning .tested-badge {
+  background: rgba(184,84,58,0.15);
+  border-color: rgba(184,84,58,0.4);
+  color: var(--accent);
+}
+.tested-item.is-familiar {
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(90,140,94,0.06) 100%);
+  border-color: rgba(90,140,94,0.3);
+}
+.tested-item.is-familiar .tested-badge {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: var(--bg);
+  font-size: 13px;
+}
+.tested-item.has-allergic-reaction {
+  background: linear-gradient(135deg, rgba(168,51,29,0.05) 0%, rgba(168,51,29,0.10) 100%);
+  border: 1.5px solid var(--reaction);
+}
+.tested-item.has-allergic-reaction .tested-name { color: var(--reaction); }
+.tested-item.has-allergic-reaction .tested-badge {
+  background: var(--reaction);
+  border-color: var(--reaction);
+  color: white;
+}
+.tested-item.has-allergic-reaction .tested-name::after { display: none; }
 
 .filter-bar { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
 .filter-bar::-webkit-scrollbar { display: none; }
@@ -1371,20 +1430,37 @@ function getSuggestionOfDay() {
   const currentPhase = currentPhaseFromAge();
   const target = exposureTarget();
   
-  // Priorité 1 : allergènes prioritaires JAMAIS introduits
-  const priorityFoods = FOODS.filter(f => f.priority && f.phase === currentPhase);
-  const untestedPriority = priorityFoods.filter(f => exposureCount(f.id) === 0 && !hasAllergicReaction(f.id));
-  if (untestedPriority.length > 0) {
-    const f = untestedPriority[0];
-    return {
-      food: f,
-      reason: `allergène prioritaire pas encore introduit (fenêtre 4-6 mois importante)`
-    };
+  // RÈGLE D'OBSERVATION : si un allergène (prioritaire OU UE 14) a été introduit
+  // il y a moins de 3 jours, on bloque l'introduction d'un NOUVEL allergène.
+  // On regarde les 3 derniers jours pour voir si un allergène est encore en surveillance.
+  const allergenInObservation = state.entries.some(e => {
+    if (daysAgo(e.date) >= 3) return false;
+    const allergenFoodIds = e.foods.filter(fid => {
+      const f = FOODS.find(x => x.id === fid);
+      return f && f.allerg;
+    });
+    // matière grasse allergène (beurre/crème/noix) ?
+    const fatFood = e.fat && e.fat !== '__custom__' ? FOODS.find(f => f.id === e.fat) : null;
+    const fatIsAllerg = fatFood && fatFood.allerg;
+    return allergenFoodIds.length > 0 || fatIsAllerg;
+  });
+  
+  // Priorité 1 : allergènes prioritaires JAMAIS introduits — sauf si un allergène en cours d'observation
+  if (!allergenInObservation) {
+    const priorityFoods = FOODS.filter(f => f.priority && f.phase === currentPhase);
+    const untestedPriority = priorityFoods.filter(f => exposureCount(f.id) === 0 && !hasAllergicReaction(f.id));
+    if (untestedPriority.length > 0) {
+      const f = untestedPriority[0];
+      return {
+        food: f,
+        reason: `allergène prioritaire pas encore introduit (fenêtre 4-6 mois importante)`
+      };
+    }
   }
   
-  // Priorité 2 : aliments commencés avec compteur faible (1-3 expos), pas reproposés depuis 3+ jours
+  // Priorité 2 : aliments commencés avec compteur faible, pas reproposés depuis 3+ jours
+  // (cette suggestion est compatible avec tout : c'est une re-exposition d'un aliment déjà connu)
   const inProgress = FOODS
-    .filter(f => f.phase === currentPhase || PHASES[f.phase].range && PHASES[f.phase].range[0] <= ageInMonths())
     .filter(f => {
       if (hasAllergicReaction(f.id)) return false;
       const count = exposureCount(f.id);
@@ -1405,11 +1481,13 @@ function getSuggestionOfDay() {
     };
   }
   
-  // Priorité 3 : nouveau aliment non-allergène de la phase actuelle
+  // Priorité 3 : nouvel aliment non-allergène de la phase actuelle
+  // Si un allergène est en observation, on suggère exclusivement un non-allergène
   const phaseFoods = FOODS.filter(f => 
     f.phase === currentPhase && 
     exposureCount(f.id) === 0 &&
     !f.priority &&
+    !f.allerg && // jamais d'allergène ici, même si en observation tolérée
     !hasAllergicReaction(f.id) &&
     f.cat !== 'matiere-grasse' &&
     f.cat !== 'autre'
@@ -1422,9 +1500,10 @@ function getSuggestionOfDay() {
     });
     phaseFoods.sort((a, b) => (catCounts[a.cat] || 0) - (catCounts[b.cat] || 0));
     const f = phaseFoods[0];
+    const extra = allergenInObservation ? ' (non-allergène, compatible avec ton observation en cours)' : '';
     return {
       food: f,
-      reason: `nouveau ${CAT_LABEL[f.cat].toLowerCase()} à découvrir`
+      reason: `nouveau ${CAT_LABEL[f.cat].toLowerCase()} à découvrir${extra}`
     };
   }
   
@@ -1679,12 +1758,31 @@ function renderTested() {
     el.innerHTML = `<div class="empty"><div class="empty-art">·</div><p>Rien dans cette catégorie.</p></div>`;
     return;
   }
-  el.innerHTML = `<div class="tested-grid">${items.map(({food, first}) => `
-    <div class="tested-item ${food.allerg ? 'is-allergen' : ''}" data-food="${food.id}">
-      <div class="tested-name">${food.name}</div>
-      <div class="tested-date">${new Date(first + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</div>
-    </div>
-  `).join('')}</div>`;
+  el.innerHTML = `<div class="tested-grid">${items.map(({food, first}) => {
+    const status = exposureStatus(food.id);
+    const hasAllergic = hasAllergicReaction(food.id);
+    let cardClass = `tested-item ${food.allerg ? 'is-allergen' : ''}`;
+    if (hasAllergic) cardClass += ' has-allergic-reaction';
+    else if (status.key === 'familiar') cardClass += ' is-familiar';
+    else if (status.key === 'learning') cardClass += ' is-learning';
+    else if (status.key === 'discovery') cardClass += ' is-discovery';
+    
+    let badgeContent = '';
+    if (hasAllergic) badgeContent = '⚠';
+    else if (status.key === 'familiar') badgeContent = '✓';
+    else badgeContent = status.count;
+    
+    return `
+      <div class="${cardClass}" data-food="${food.id}">
+        <div class="tested-badge">${badgeContent}</div>
+        <div class="tested-name">${food.name}</div>
+        <div class="tested-meta">
+          <span class="tested-date">${new Date(first + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+          ${!hasAllergic ? `<span class="tested-count">${status.count}/${status.target}</span>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('')}</div>`;
   document.querySelectorAll('#tested-content .tested-item').forEach(card => {
     card.addEventListener('click', () => openFiche(card.dataset.food));
   });
