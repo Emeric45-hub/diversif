@@ -118,6 +118,7 @@ section.active { display: block; }
 .entry-notes { margin-top: 8px; font-size: 13px; color: var(--ink-muted); font-style: italic; padding-top: 8px; border-top: 1px dashed var(--line-soft); }
 .reaction-pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; }
 .reaction-ras { background: rgba(90,140,94,0.12); color: var(--ok); }
+.reaction-refus { background: rgba(212,167,58,0.12); color: #8a6b1a; }
 .reaction-leger { background: rgba(212,167,58,0.15); color: #8a6b1a; }
 .reaction-surveil { background: rgba(212,167,58,0.2); color: #8a6b1a; }
 .reaction-reaction { background: rgba(168,51,29,0.15); color: var(--reaction); }
@@ -220,39 +221,6 @@ section.active { display: block; }
 .chip { flex-shrink: 0; padding: 6px 12px; background: var(--bg-card); border: 1px solid var(--line); border-radius: 20px; font-size: 12px; font-weight: 500; color: var(--ink-muted); cursor: pointer; white-space: nowrap; }
 .chip.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 
-.entry-actions {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  display: flex;
-  gap: 4px;
-  opacity: 0.4;
-  transition: opacity 0.2s;
-}
-.entry:hover .entry-actions, .entry:active .entry-actions { opacity: 1; }
-.entry-edit, .entry-delete {
-  background: var(--bg);
-  border: 1px solid var(--line);
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 13px;
-  line-height: 1;
-  color: var(--ink-muted);
-  padding: 0;
-  transition: background 0.15s, color 0.15s;
-}
-.entry-edit:active { background: var(--ink); color: var(--bg); }
-.entry-delete:active { background: var(--reaction); color: var(--bg); border-color: var(--reaction); }
-.entry-delete { font-size: 16px; }
-@media (hover: none) {
-  .entry-actions { opacity: 0.7; }
-}
-
 .entry-fat {
   margin-top: 4px;
   font-size: 12px;
@@ -264,6 +232,249 @@ section.active { display: block; }
   color: var(--accent);
   border-radius: 8px;
   font-weight: 500;
+}
+
+/* Entry interactive avec hover/active subtil */
+.entry {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.entry.has-warning {
+  border-left: 3px solid var(--allergen);
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(193,74,43,0.04) 100%);
+}
+
+/* Bouton supprimer dans la modale d'édition */
+.btn-delete-entry {
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid rgba(168, 51, 29, 0.25);
+  border-radius: var(--radius-sm);
+  color: var(--reaction);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-delete-entry:active {
+  background: rgba(168, 51, 29, 0.08);
+}
+
+/* Menu contextuel iOS-style (long press) */
+.ctx-menu {
+  position: fixed;
+  z-index: 300;
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 6px;
+  min-width: 160px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.04);
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 0.18s, transform 0.18s;
+  pointer-events: none;
+}
+.ctx-menu.show { opacity: 1; transform: scale(1); pointer-events: auto; }
+.ctx-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.ctx-item:active { background: var(--line-soft); }
+.ctx-item.ctx-danger { color: var(--reaction); }
+
+/* Bandeau suggestion du jour */
+.suggestion-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(135deg, var(--bg-card) 0%, #f5e6d8 100%);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 14px 14px;
+  margin-bottom: 18px;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.suggestion-banner:active { transform: scale(0.99); }
+.suggestion-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.suggestion-content { flex: 1; min-width: 0; }
+.suggestion-label {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 3px;
+}
+.suggestion-text {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.suggestion-text strong {
+  font-family: 'Fraunces', serif;
+  font-weight: 500;
+  color: var(--accent);
+}
+.suggestion-add {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  font-size: 18px;
+  font-weight: 300;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.suggestion-add:active { transform: scale(0.9); }
+
+/* Bloc statut/compteur d'expositions dans la fiche aliment */
+.fiche-exposure-block {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.fiche-exposure-block.fiche-status-discovery {
+  border-left: 3px solid #d4a73a;
+}
+.fiche-exposure-block.fiche-status-learning {
+  border-left: 3px solid var(--accent);
+}
+.fiche-exposure-block.fiche-status-familiar {
+  border-left: 3px solid var(--ok);
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(90,140,94,0.05) 100%);
+}
+.fiche-exposure-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.fiche-exposure-status {
+  font-family: 'Fraunces', serif;
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+.fiche-exposure-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  letter-spacing: 0.02em;
+}
+.fiche-exposure-bar {
+  height: 6px;
+  background: var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.fiche-exposure-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.4s;
+}
+.fiche-status-familiar .fiche-exposure-fill {
+  background: var(--ok);
+}
+.fiche-exposure-note {
+  font-size: 11px;
+  color: var(--ink-muted);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* Avertissement réaction allergique dans la fiche (haut, rouge) */
+.fiche-reaction-warning {
+  background: rgba(168,51,29,0.08);
+  border: 1.5px solid var(--reaction);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  color: var(--reaction);
+}
+.fiche-reaction-warning strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+.fiche-reaction-warning p {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink);
+  margin: 0;
+}
+
+/* Action button secondaire (pour aliments déjà familiers) */
+.fiche-action-secondary {
+  background: var(--bg-card) !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--line) !important;
+}
+
+/* Statuts des reco-cards selon expositions */
+.reco-card.discovery {
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(212,167,58,0.08) 100%);
+  border-color: rgba(212,167,58,0.3);
+}
+.reco-card.discovery .check {
+  background: rgba(212,167,58,0.2);
+  border-color: rgba(212,167,58,0.5);
+  color: #8a6b1a;
+  font-size: 10px;
+  font-weight: 700;
+}
+.reco-card.learning {
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(184,84,58,0.08) 100%);
+  border-color: rgba(184,84,58,0.25);
+}
+.reco-card.learning .check {
+  background: rgba(184,84,58,0.18);
+  border-color: rgba(184,84,58,0.4);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+}
+.reco-card.familiar {
+  /* utilise les styles "tested" existants */
+}
+.reco-card.has-allergic-reaction {
+  background: linear-gradient(135deg, rgba(168,51,29,0.05) 0%, rgba(168,51,29,0.12) 100%);
+  border: 1.5px solid var(--reaction);
+}
+.reco-card.has-allergic-reaction .check {
+  background: var(--reaction);
+  color: white;
+  border-color: var(--reaction);
+}
+.reco-card.has-allergic-reaction .reco-name {
+  color: var(--reaction);
 }
 
 /* Toast (annuler suppression) */
@@ -379,9 +590,12 @@ section.active { display: block; }
 .food-tag .remove { background: rgba(255,255,255,0.25); border: none; color: inherit; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; line-height: 1; }
 
 .segmented { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--line-soft); padding: 3px; border-radius: var(--radius-sm); }
-.seg-option { padding: 8px 4px; background: none; border: none; border-radius: 6px; font-family: inherit; font-size: 12px; font-weight: 500; color: var(--ink-muted); cursor: pointer; text-align: center; }
+.segmented.seg-5 { grid-template-columns: repeat(5, 1fr); }
+.seg-option { padding: 8px 2px; background: none; border: none; border-radius: 6px; font-family: inherit; font-size: 12px; font-weight: 500; color: var(--ink-muted); cursor: pointer; text-align: center; }
+.segmented.seg-5 .seg-option { font-size: 11px; }
 .seg-option.active { background: var(--bg); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 .seg-option.active.r-ras { color: var(--ok); }
+.seg-option.active.r-refus { color: #8a6b1a; }
 .seg-option.active.r-leger, .seg-option.active.r-surveil { color: #8a6b1a; }
 .seg-option.active.r-reaction { color: var(--reaction); }
 
@@ -555,10 +769,11 @@ section.active { display: block; }
 
     <div class="field">
       <label>Réaction</label>
-      <div class="segmented" id="seg-reaction">
+      <div class="segmented seg-5" id="seg-reaction">
         <button type="button" class="seg-option active r-ras" data-val="ras">RAS</button>
+        <button type="button" class="seg-option r-refus" data-val="refus">Refus</button>
         <button type="button" class="seg-option r-leger" data-val="leger">Léger</button>
-        <button type="button" class="seg-option r-surveil" data-val="surveil">À surveiller</button>
+        <button type="button" class="seg-option r-surveil" data-val="surveil">Surveiller</button>
         <button type="button" class="seg-option r-reaction" data-val="reaction">Réaction</button>
       </div>
     </div>
@@ -569,6 +784,8 @@ section.active { display: block; }
       <button class="btn btn-secondary" id="btn-cancel">Annuler</button>
       <button class="btn btn-primary" id="btn-save">Enregistrer</button>
     </div>
+    
+    <button class="btn-delete-entry" id="btn-delete-entry" style="display: none;">🗑 Supprimer ce repas</button>
   </div>
 </div>
 
@@ -894,12 +1111,64 @@ function findFood(name) {
   const n = name.toLowerCase().trim();
   return FOODS.find(f => f.name.toLowerCase() === n || f.id === n);
 }
-function reactionLabel(r) { return { ras: 'RAS', leger: 'Léger', surveil: 'À surveiller', reaction: 'Réaction' }[r] || r; }
+function reactionLabel(r) { return { ras: 'RAS', refus: 'Refus', leger: 'Léger', surveil: 'À surveiller', reaction: 'Réaction allergique' }[r] || r; }
 function formLabel(f) { return { puree: 'Purée lisse', mixe: 'Mouliné', ecrase: 'Écrasé', morceau: 'Morceau' }[f] || f; }
 function isTested(fid) { return state.entries.some(e => e.foods.includes(fid) || e.fat === fid); }
 function firstTested(fid) {
   const dates = state.entries.filter(e => e.foods.includes(fid) || e.fat === fid).map(e => e.date).sort();
   return dates[0] || null;
+}
+
+// Compteur d'expositions : on ne compte PAS les entries avec reaction='reaction' (allergique)
+// car ce n'est pas une exposition d'apprentissage mais un signal d'alerte
+function exposureCount(fid) {
+  return state.entries.filter(e => 
+    (e.foods.includes(fid) || e.fat === fid) && e.reaction !== 'reaction'
+  ).length;
+}
+
+function lastExposureDate(fid) {
+  const dates = state.entries
+    .filter(e => (e.foods.includes(fid) || e.fat === fid) && e.reaction !== 'reaction')
+    .map(e => e.date)
+    .sort()
+    .reverse();
+  return dates[0] || null;
+}
+
+function reactionCounts(fid) {
+  const counts = { ras: 0, refus: 0, leger: 0, surveil: 0, reaction: 0 };
+  state.entries.forEach(e => {
+    if (e.foods.includes(fid) || e.fat === fid) {
+      if (counts[e.reaction] !== undefined) counts[e.reaction]++;
+    }
+  });
+  return counts;
+}
+
+// Détecte si l'aliment a déjà eu une réaction allergique documentée
+function hasAllergicReaction(fid) {
+  return state.entries.some(e => 
+    (e.foods.includes(fid) || e.fat === fid) && e.reaction === 'reaction'
+  );
+}
+
+// Objectif d'expositions adapté à l'âge actuel de bébé (Sullivan&Birch, NESR/USDA)
+function exposureTarget() {
+  const m = ageInMonths();
+  if (m === null || m < 6) return 8;       // 4-6 mois
+  if (m < 12) return 10;                    // 6-12 mois
+  return 15;                                // 12 mois+
+}
+
+// Statut d'un aliment selon nombre d'expositions
+function exposureStatus(fid) {
+  const count = exposureCount(fid);
+  const target = exposureTarget();
+  if (count === 0) return { key: 'untested', label: 'Non testé', count, target };
+  if (count <= 2) return { key: 'discovery', label: 'En découverte', count, target };
+  if (count < target) return { key: 'learning', label: 'En cours', count, target };
+  return { key: 'familiar', label: 'Familier', count, target };
 }
 
 function render() {
@@ -930,15 +1199,34 @@ function updateCounts() {
 
 function renderJournal() {
   const el = document.getElementById('journal-content');
+  
+  // Bandeau suggestion du jour
+  const suggestion = getSuggestionOfDay();
+  let suggestionHtml = '';
+  if (suggestion) {
+    suggestionHtml = `
+      <div class="suggestion-banner" data-food="${suggestion.food.id}">
+        <div class="suggestion-icon">💡</div>
+        <div class="suggestion-content">
+          <div class="suggestion-label">Suggestion du soir</div>
+          <div class="suggestion-text"><strong>${suggestion.food.name}</strong> — ${suggestion.reason}</div>
+        </div>
+        <button class="suggestion-add" data-food="${suggestion.food.id}" aria-label="Proposer">+</button>
+      </div>
+    `;
+  }
+  
   if (!state.entries.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-art">∅</div><p>Aucun repas enregistré.<br>Appuie sur + pour démarrer.</p></div>`;
+    el.innerHTML = suggestionHtml + `<div class="empty"><div class="empty-art">∅</div><p>Aucun repas enregistré.<br>Appuie sur + pour démarrer.</p></div>`;
+    if (suggestion) wireSuggestion();
     return;
   }
+  
   const sorted = [...state.entries].sort((a,b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
   const groups = {};
   sorted.forEach(e => { (groups[e.date] = groups[e.date] || []).push(e); });
   
-  el.innerHTML = Object.entries(groups).map(([date, items]) => `
+  el.innerHTML = suggestionHtml + Object.entries(groups).map(([date, items]) => `
     <div class="day-group">
       <div class="day-header">
         <span>${formatDay(date)}</span>
@@ -948,23 +1236,103 @@ function renderJournal() {
     </div>
   `).join('');
   
-  el.querySelectorAll('.entry-delete').forEach(btn => {
+  // Tap simple sur un repas = ouverture de la modale d'édition
+  el.querySelectorAll('.entry').forEach(entryEl => {
+    let pressTimer;
+    let isLongPress = false;
+    
+    entryEl.addEventListener('click', (e) => {
+      if (isLongPress) { isLongPress = false; return; }
+      const id = entryEl.dataset.id;
+      if (id) openEditModal(id);
+    });
+    
+    // Long press : menu contextuel (Modifier / Supprimer)
+    entryEl.addEventListener('touchstart', (e) => {
+      pressTimer = setTimeout(() => {
+        isLongPress = true;
+        // Vibration légère si supportée
+        if (navigator.vibrate) navigator.vibrate(30);
+        showContextMenu(entryEl.dataset.id, e);
+      }, 500);
+    });
+    entryEl.addEventListener('touchend', () => clearTimeout(pressTimer));
+    entryEl.addEventListener('touchmove', () => clearTimeout(pressTimer));
+    entryEl.addEventListener('touchcancel', () => clearTimeout(pressTimer));
+  });
+  
+  if (suggestion) wireSuggestion();
+}
+
+function wireSuggestion() {
+  document.querySelectorAll('.suggestion-add').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const id = btn.dataset.id;
-      const entry = state.entries.find(x => x.id === id);
-      if (!entry) return;
-      if (confirm('Supprimer ce repas ?')) {
-        deleteEntryWithUndo(entry);
+      const fid = btn.dataset.food;
+      openAddModal();
+      if (!state.draft.foods.includes(fid)) state.draft.foods.push(fid);
+      renderSelectedFoods();
+    });
+  });
+  document.querySelectorAll('.suggestion-banner').forEach(banner => {
+    banner.addEventListener('click', (e) => {
+      if (e.target.classList.contains('suggestion-add')) return;
+      const fid = banner.dataset.food;
+      if (fid) openFiche(fid);
+    });
+  });
+}
+
+function showContextMenu(entryId, event) {
+  // Crée un menu contextuel iOS-style à côté du repas
+  const existing = document.getElementById('ctx-menu');
+  if (existing) existing.remove();
+  
+  const menu = document.createElement('div');
+  menu.id = 'ctx-menu';
+  menu.className = 'ctx-menu';
+  menu.innerHTML = `
+    <button class="ctx-item" data-action="edit">✎ Modifier</button>
+    <button class="ctx-item ctx-danger" data-action="delete">🗑 Supprimer</button>
+  `;
+  document.body.appendChild(menu);
+  
+  // Centre vertical, vers le bas
+  const touch = event.touches ? event.touches[0] : event;
+  const x = touch.clientX;
+  const y = touch.clientY;
+  menu.style.left = Math.max(10, Math.min(window.innerWidth - 180, x - 90)) + 'px';
+  menu.style.top = (y + 10) + 'px';
+  
+  setTimeout(() => menu.classList.add('show'), 10);
+  
+  const close = () => {
+    menu.classList.remove('show');
+    setTimeout(() => menu.remove(), 200);
+    document.removeEventListener('click', close, true);
+    document.removeEventListener('touchstart', closeIfOutside, true);
+  };
+  const closeIfOutside = (e) => {
+    if (!menu.contains(e.target)) close();
+  };
+  
+  menu.querySelectorAll('.ctx-item').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const action = btn.dataset.action;
+      close();
+      if (action === 'edit') openEditModal(entryId);
+      else if (action === 'delete') {
+        const entry = state.entries.find(x => x.id === entryId);
+        if (entry && confirm('Supprimer ce repas ?')) deleteEntryWithUndo(entry);
       }
     });
   });
-  el.querySelectorAll('.entry-edit').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openEditModal(btn.dataset.id);
-    });
-  });
+  
+  setTimeout(() => {
+    document.addEventListener('click', close, true);
+    document.addEventListener('touchstart', closeIfOutside, true);
+  }, 100);
 }
 
 function fatLabel(entry) {
@@ -978,12 +1346,11 @@ function renderEntry(entry) {
   const foodObjs = entry.foods.map(fid => FOODS.find(f => f.id === fid) || { id: fid, name: fid });
   const allergens = [...new Set(foodObjs.filter(f => f.allerg).map(f => f.allerg))];
   const fat = fatLabel(entry);
+  // Détecter si un aliment du repas a déjà eu une réaction allergique antérieure
+  const hasWarning = foodObjs.some(f => hasAllergicReaction(f.id)) || 
+                     (entry.fat && entry.fat !== '__custom__' && hasAllergicReaction(entry.fat));
   return `
-    <div class="entry">
-      <div class="entry-actions">
-        <button class="entry-edit" data-id="${entry.id}" aria-label="Modifier">✎</button>
-        <button class="entry-delete" data-id="${entry.id}" aria-label="Supprimer">×</button>
-      </div>
+    <div class="entry ${hasWarning ? 'has-warning' : ''}" data-id="${entry.id}">
       <div class="entry-foods">${foodObjs.map(f => f.name).join(' · ')}</div>
       ${fat ? `<div class="entry-fat">+ ${fat}</div>` : ''}
       <div class="entry-meta">
@@ -995,6 +1362,73 @@ function renderEntry(entry) {
       ${entry.notes ? `<div class="entry-notes">${entry.notes}</div>` : ''}
     </div>
   `;
+}
+
+// SUGGESTION DU SOIR — algorithme de priorisation
+function getSuggestionOfDay() {
+  if (!state.baby.dob) return null;
+  
+  const currentPhase = currentPhaseFromAge();
+  const target = exposureTarget();
+  
+  // Priorité 1 : allergènes prioritaires JAMAIS introduits
+  const priorityFoods = FOODS.filter(f => f.priority && f.phase === currentPhase);
+  const untestedPriority = priorityFoods.filter(f => exposureCount(f.id) === 0 && !hasAllergicReaction(f.id));
+  if (untestedPriority.length > 0) {
+    const f = untestedPriority[0];
+    return {
+      food: f,
+      reason: `allergène prioritaire pas encore introduit (fenêtre 4-6 mois importante)`
+    };
+  }
+  
+  // Priorité 2 : aliments commencés avec compteur faible (1-3 expos), pas reproposés depuis 3+ jours
+  const inProgress = FOODS
+    .filter(f => f.phase === currentPhase || PHASES[f.phase].range && PHASES[f.phase].range[0] <= ageInMonths())
+    .filter(f => {
+      if (hasAllergicReaction(f.id)) return false;
+      const count = exposureCount(f.id);
+      if (count === 0 || count >= target) return false;
+      const last = lastExposureDate(f.id);
+      if (!last) return false;
+      return daysAgo(last) >= 3;
+    })
+    .sort((a, b) => exposureCount(a.id) - exposureCount(b.id)); // les moins exposés d'abord
+  
+  if (inProgress.length > 0) {
+    const f = inProgress[0];
+    const count = exposureCount(f.id);
+    const last = lastExposureDate(f.id);
+    return {
+      food: f,
+      reason: `${count} exposition${count > 1 ? 's' : ''} sur ${target} — pas reproposé depuis ${daysAgo(last)} jours`
+    };
+  }
+  
+  // Priorité 3 : nouveau aliment non-allergène de la phase actuelle
+  const phaseFoods = FOODS.filter(f => 
+    f.phase === currentPhase && 
+    exposureCount(f.id) === 0 &&
+    !f.priority &&
+    !hasAllergicReaction(f.id) &&
+    f.cat !== 'matiere-grasse' &&
+    f.cat !== 'autre'
+  );
+  if (phaseFoods.length > 0) {
+    // Choisir une catégorie sous-représentée
+    const catCounts = {};
+    FOODS.filter(f => isTested(f.id)).forEach(f => {
+      catCounts[f.cat] = (catCounts[f.cat] || 0) + 1;
+    });
+    phaseFoods.sort((a, b) => (catCounts[a.cat] || 0) - (catCounts[b.cat] || 0));
+    const f = phaseFoods[0];
+    return {
+      food: f,
+      reason: `nouveau ${CAT_LABEL[f.cat].toLowerCase()} à découvrir`
+    };
+  }
+  
+  return null;
 }
 
 function renderReco() {
@@ -1015,6 +1449,7 @@ function renderReco() {
 
   const phase = PHASES[state.currentPhase];
   const phaseFoods = FOODS.filter(f => f.phase === state.currentPhase);
+  const familiar = phaseFoods.filter(f => exposureStatus(f.id).key === 'familiar').length;
   const tested = phaseFoods.filter(f => isTested(f.id)).length;
   const total = phaseFoods.length;
   const pct = total ? Math.round((tested/total) * 100) : 0;
@@ -1030,9 +1465,8 @@ function renderReco() {
       <h3>${phase.title}</h3>
       <p>${phase.desc}</p>
       <div class="progress-summary">
-        <span><strong>${tested}</strong> / ${total} explorés</span>
+        <span><strong>${familiar}</strong> familier${familiar > 1 ? 's' : ''} · ${tested}/${total} explorés</span>
         <div class="progress-bar"><div class="progress-fill" style="width: ${pct}%"></div></div>
-        <span style="color: var(--ink-muted);">${pct}%</span>
       </div>
     </div>
   `;
@@ -1091,12 +1525,26 @@ function renderReco() {
         ${items.map(f => {
           const t = isTested(f.id);
           const dateFirst = firstTested(f.id);
+          const status = exposureStatus(f.id);
+          const hasAllergic = hasAllergicReaction(f.id);
+          let cardClass = `reco-card ${f.allerg ? 'is-allergen' : ''} ${f.priority ? 'is-priority' : ''}`;
+          if (hasAllergic) cardClass += ' has-allergic-reaction';
+          else if (status.key === 'familiar') cardClass += ' tested familiar';
+          else if (status.key === 'learning') cardClass += ' learning';
+          else if (status.key === 'discovery') cardClass += ' discovery';
+          
+          let checkContent = '';
+          if (hasAllergic) checkContent = '⚠';
+          else if (status.key === 'familiar') checkContent = '✓';
+          else if (t) checkContent = status.count;
+          
           return `
-            <div class="reco-card ${t ? 'tested' : ''} ${f.allerg ? 'is-allergen' : ''} ${f.priority ? 'is-priority' : ''}" data-food="${f.id}">
-              <div class="check">${t ? '✓' : ''}</div>
+            <div class="${cardClass}" data-food="${f.id}">
+              <div class="check">${checkContent}</div>
               ${f.priority ? '<div class="priority-star">★</div>' : ''}
               <div class="reco-name">${f.name}</div>
-              ${t && dateFirst ? `<div class="first-date">Introduit ${formatDay(dateFirst).toLowerCase()}</div>` : ''}
+              ${t && !hasAllergic ? `<div class="first-date">${status.count}/${status.target} expo${status.count > 1 ? 's' : ''}</div>` : ''}
+              ${hasAllergic ? `<div class="first-date" style="color: #f5a78d;">Réaction allergique</div>` : ''}
             </div>
           `;
         }).join('')}
@@ -1247,7 +1695,11 @@ function openFiche(fid) {
   if (!food) return;
   const t = isTested(fid);
   const firstDate = firstTested(fid);
+  const lastDate = lastExposureDate(fid);
   const obsItem = getObservationItems().find(x => x.food.id === fid);
+  const status = exposureStatus(fid);
+  const reactions = reactionCounts(fid);
+  const hasAllergic = hasAllergicReaction(fid);
   
   let html = `
     <div class="fiche-eyebrow">${CAT_LABEL[food.cat]} · phase ${PHASES[food.phase].label}</div>
@@ -1255,6 +1707,15 @@ function openFiche(fid) {
     <div class="fiche-cat">${PHASES[food.phase].sub}</div>
   `;
 
+  // ALERTE ROUGE si réaction allergique documentée (priorité visuelle absolue)
+  if (hasAllergic) {
+    html += `<div class="fiche-reaction-warning">
+      <strong>⚠ Réaction allergique documentée</strong>
+      <p>Une ou plusieurs réactions ont été enregistrées pour cet aliment. À reconsidérer avec votre pédiatre avant nouvelle introduction.</p>
+    </div>`;
+  }
+
+  // Bannière allergène (info générale)
   if (food.allerg) {
     const label = food.priority 
       ? `★ Allergène pédiatrique prioritaire — ${food.allerg}`
@@ -1262,8 +1723,42 @@ function openFiche(fid) {
     html += `<div class="fiche-allergen-banner ${food.priority ? 'is-priority' : ''}"><strong>${label}</strong>${food.allergNote ? `<br>${food.allergNote}` : ''}</div>`;
   }
 
+  // Bloc statut/compteur d'expositions
   if (t) {
-    html += `<div class="fiche-status-tested">✓ <strong>Déjà introduit</strong> le ${new Date(firstDate + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}${obsItem ? ` · en cours d'observation` : ''}</div>`;
+    const progressPct = Math.min(100, Math.round((status.count / status.target) * 100));
+    const statusEmoji = {
+      discovery: '🌱',
+      learning: '🌿',
+      familiar: '✓'
+    }[status.key] || '✓';
+    
+    html += `
+      <div class="fiche-exposure-block fiche-status-${status.key}">
+        <div class="fiche-exposure-header">
+          <span class="fiche-exposure-status">${statusEmoji} ${status.label}</span>
+          <span class="fiche-exposure-count">${status.count} / ${status.target}</span>
+        </div>
+        <div class="fiche-exposure-bar"><div class="fiche-exposure-fill" style="width: ${progressPct}%"></div></div>
+        ${status.key !== 'familiar' ? `<div class="fiche-exposure-note">La science recommande ${status.target} expositions à cet âge avant de conclure qu'un aliment est rejeté (Sullivan & Birch 1994, NESR/USDA 2022).</div>` : `<div class="fiche-exposure-note">Aliment familier ✓ — Rose le reconnaît maintenant.</div>`}
+      </div>
+    `;
+
+    html += `<div class="fiche-status-tested">Première fois le <strong>${new Date(firstDate + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>${obsItem ? ` · en cours d'observation` : ''}${lastDate && lastDate !== firstDate ? `<br>Dernière fois le <strong>${new Date(lastDate + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</strong>` : ''}</div>`;
+
+    // Répartition des réactions
+    const totalReactions = Object.values(reactions).reduce((a,b) => a+b, 0);
+    if (totalReactions > 0) {
+      const reactionPills = [];
+      if (reactions.ras) reactionPills.push(`<span class="reaction-pill reaction-ras">${reactions.ras} RAS</span>`);
+      if (reactions.refus) reactionPills.push(`<span class="reaction-pill reaction-refus">${reactions.refus} refus</span>`);
+      if (reactions.leger) reactionPills.push(`<span class="reaction-pill reaction-leger">${reactions.leger} léger</span>`);
+      if (reactions.surveil) reactionPills.push(`<span class="reaction-pill reaction-surveil">${reactions.surveil} à surveiller</span>`);
+      if (reactions.reaction) reactionPills.push(`<span class="reaction-pill reaction-reaction">${reactions.reaction} allergique</span>`);
+      html += `<div class="fiche-row">
+        <div class="fiche-label">Réactions</div>
+        <div class="fiche-value" style="display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end;">${reactionPills.join('')}</div>
+      </div>`;
+    }
   }
 
   html += `
@@ -1280,17 +1775,15 @@ function openFiche(fid) {
       <div class="fiche-label">Conseil</div>
       <div class="fiche-value"><em>${food.tip}</em></div>
     </div>` : ''}
-    ${food.allerg ? `
-    <div class="fiche-row">
-      <div class="fiche-label">Allergène</div>
-      <div class="fiche-value">${food.allerg}</div>
-    </div>` : ''}
   `;
 
-  if (!t) {
-    html += `<button class="fiche-action-btn" id="fiche-add-btn">+ Ajouter à un repas</button>`;
+  // Bouton d'action principal
+  if (status.key === 'familiar') {
+    html += `<button class="fiche-action-btn fiche-action-secondary" id="fiche-add-btn">+ Reproposer dans un repas</button>`;
+  } else if (t) {
+    html += `<button class="fiche-action-btn" id="fiche-add-btn">+ Reproposer (${status.target - status.count} expositions restantes)</button>`;
   } else {
-    html += `<button class="fiche-action-btn" id="fiche-close-btn">Fermer</button>`;
+    html += `<button class="fiche-action-btn" id="fiche-add-btn">+ Introduire dans un repas</button>`;
   }
 
   document.getElementById('fiche-content').innerHTML = html;
@@ -1306,8 +1799,6 @@ function openFiche(fid) {
       renderSelectedFoods();
     });
   }
-  const closeBtn = document.getElementById('fiche-close-btn');
-  if (closeBtn) closeBtn.addEventListener('click', closeFiche);
 }
 
 function closeFiche() {
@@ -1329,6 +1820,7 @@ function openAddModal() {
   document.getElementById('f-fat').value = '';
   document.getElementById('f-fat-custom').value = '';
   document.getElementById('f-fat-custom').style.display = 'none';
+  document.getElementById('btn-delete-entry').style.display = 'none';
   renderSelectedFoods();
   resetSegmented('seg-form', 'puree');
   resetSegmented('seg-reaction', 'ras');
@@ -1357,6 +1849,7 @@ function openEditModal(entryId) {
   document.getElementById('f-fat').value = entry.fat || '';
   document.getElementById('f-fat-custom').value = entry.fatCustom || '';
   document.getElementById('f-fat-custom').style.display = isCustom ? 'block' : 'none';
+  document.getElementById('btn-delete-entry').style.display = 'block';
   renderSelectedFoods();
   resetSegmented('seg-form', entry.form);
   resetSegmented('seg-reaction', entry.reaction);
@@ -1488,6 +1981,16 @@ document.getElementById('fab').addEventListener('click', openAddModal);
 document.getElementById('btn-cancel').addEventListener('click', closeAddModal);
 document.getElementById('modal-add').addEventListener('click', e => {
   if (e.target.id === 'modal-add') closeAddModal();
+});
+
+document.getElementById('btn-delete-entry').addEventListener('click', () => {
+  if (!state.draft.editingId) return;
+  const entry = state.entries.find(x => x.id === state.draft.editingId);
+  if (!entry) return;
+  if (confirm('Supprimer ce repas ?')) {
+    deleteEntryWithUndo(entry);
+    closeAddModal();
+  }
 });
 
 document.querySelectorAll('#seg-form .seg-option').forEach(btn => {
